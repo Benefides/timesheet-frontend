@@ -3,6 +3,7 @@ import {
   Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem,
   Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
 import type { AdminUser, Role, UserStatus } from '../lib/types';
@@ -12,6 +13,7 @@ const STATUS_COLOR: Record<UserStatus, 'default' | 'warning' | 'success'> = {
 };
 
 export default function AdminUsersPage() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [target, setTarget] = useState<AdminUser | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +72,16 @@ export default function AdminUsersPage() {
           <TableBody>
             {(users.data ?? []).map((u) => (
               <TableRow key={u.id} hover>
-                <TableCell>{u.displayName}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="text"
+                    size="small"
+                    sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
+                    onClick={() => navigate(`/admin/employees/${u.id}`)}
+                  >
+                    {u.displayName}
+                  </Button>
+                </TableCell>
                 <TableCell>{u.email}</TableCell>
                 <TableCell>{u.role.toLowerCase()}</TableCell>
                 <TableCell><Chip size="small" label={u.status} color={STATUS_COLOR[u.status]} /></TableCell>

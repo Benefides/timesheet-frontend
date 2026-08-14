@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import TimesheetPage from './pages/TimesheetPage';
 import ApprovalsPage from './pages/ApprovalsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminTimesheetsPage from './pages/AdminTimesheetsPage';
 
 function Centered({ children }: { children: ReactNode }) {
   return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>{children}</Box>;
@@ -62,6 +63,7 @@ export default function App() {
         <Route path="/timesheet" element={<TimesheetPage />} />
         {canApprove && <Route path="/approvals" element={<ApprovalsPage />} />}
         {isAdmin && <Route path="/admin/users" element={<AdminUsersPage />} />}
+        {canApprove && <Route path="/admin/timesheets" element={<AdminTimesheetsPage />} />}
         <Route path="*" element={<Navigate to="/timesheet" replace />} />
       </Routes>
     </AppLayout>

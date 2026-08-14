@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { authMode, devUsers, loginRequest } from '../authConfig';
 import { initAuth, msalInstance } from './msal';
 
@@ -19,6 +20,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [ready, setReady] = useState(false);
   const [devEmail, setDevEmail] = useState<string | null>(() => localStorage.getItem(DEV_KEY));
   const [entraName, setEntraName] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: authMode === 'dev' ? Boolean(devEmail) : Boolean(entraName),
       signInDev: (email: string) => {
         localStorage.setItem(DEV_KEY, email);
+        queryClient.clear(); // drop any cached data from a previous user
         setDevEmail(email);
       },
       signInEntra: async () => {
@@ -54,13 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut: () => {
         if (authMode === 'dev') {
           localStorage.removeItem(DEV_KEY);
+          queryClient.clear();
           setDevEmail(null);
         } else if (msalInstance) {
           void msalInstance.logoutRedirect();
         }
       },
     }),
-    [ready, devEmail, entraName],
+    [ready, devEmail, entraName, queryClient],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

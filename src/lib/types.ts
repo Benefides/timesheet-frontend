@@ -48,6 +48,18 @@ export interface PendingItem {
   user: { displayName: string; employeeCode: string | null };
 }
 
+export interface TeamTimesheet {
+  id: string;
+  weekStart: string;
+  status: TimesheetStatus;
+  totalHours: string;
+  billableHours: string;
+  submittedAt: string | null;
+  decidedAt: string | null;
+  user: { id: string; displayName: string; employeeCode: string | null };
+  entries: TimesheetEntry[];
+}
+
 export interface AdminUser {
   id: string;
   email: string;

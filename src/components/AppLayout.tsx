@@ -7,6 +7,7 @@ import type { Me } from '../lib/types';
 const NAV: { to: string; label: string; roles: Me['role'][] }[] = [
   { to: '/timesheet', label: 'My timesheet', roles: ['EMPLOYEE', 'MANAGER', 'ADMIN'] },
   { to: '/approvals', label: 'Approvals', roles: ['MANAGER', 'ADMIN'] },
+  { to: '/admin/timesheets', label: 'View timesheets', roles: ['MANAGER', 'ADMIN'] },
   { to: '/admin/users', label: 'People', roles: ['ADMIN'] },
 ];
 
