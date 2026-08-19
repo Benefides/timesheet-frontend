@@ -15,11 +15,20 @@ function Centered({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const { ready, isAuthenticated, signOut } = useAuth();
-  const me = useMe();
+  const { ready, isAuthenticated } = useAuth();
 
+  // Nothing that calls the API may mount until MSAL has initialised and the
+  // active account is set — otherwise the request interceptor has no account
+  // to acquire a token from and sends an unauthenticated request.
   if (!ready) return <Centered><CircularProgress /></Centered>;
   if (!isAuthenticated) return <LoginPage />;
+
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
+  const { signOut } = useAuth();
+  const me = useMe();
 
   // Authenticated locally, but resolving the app profile from the backend.
   if (me.isLoading) return <Centered><CircularProgress /></Centered>;
