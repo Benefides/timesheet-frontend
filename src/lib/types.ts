@@ -67,3 +67,16 @@ export interface AdminUser {
   role: Role;
   status: UserStatus;
 }
+
+export interface AdminProject extends Project {
+  isActive: boolean;
+}
+
+export interface AdminAssignment {
+  id: string;
+  userId: string;
+  projectId: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  user: { id: string; displayName: string; employeeCode: string | null };
+}

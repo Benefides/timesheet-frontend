@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
+import { useMe } from '../lib/hooks';
 import type { AdminUser, Role, UserStatus } from '../lib/types';
 
 const STATUS_COLOR: Record<UserStatus, 'default' | 'warning' | 'success'> = {
@@ -44,6 +45,24 @@ export default function AdminUsersPage() {
         role: form.role,
       }),
     onSuccess: () => { setTarget(null); qc.invalidateQueries({ queryKey: ['admin-users'] }); },
+    onError: (e) => setError(apiErrorMessage(e)),
+  });
+
+  // ---- Post-activation administration ----
+  const me = useMe();
+  const [roleTarget, setRoleTarget] = useState<AdminUser | null>(null);
+  const [newRole, setNewRole] = useState<Role>('EMPLOYEE');
+  const [deactTarget, setDeactTarget] = useState<AdminUser | null>(null);
+
+  const changeRole = useMutation({
+    mutationFn: async () => api.patch(`/users/${roleTarget!.id}/role`, { role: newRole }),
+    onSuccess: () => { setRoleTarget(null); qc.invalidateQueries({ queryKey: ['admin-users'] }); },
+    onError: (e) => setError(apiErrorMessage(e)),
+  });
+
+  const deactivate = useMutation({
+    mutationFn: async () => api.post(`/users/${deactTarget!.id}/deactivate`),
+    onSuccess: () => { setDeactTarget(null); qc.invalidateQueries({ queryKey: ['admin-users'] }); },
     onError: (e) => setError(apiErrorMessage(e)),
   });
 
@@ -90,6 +109,19 @@ export default function AdminUsersPage() {
                     <Button size="small" variant="contained" onClick={() => openSetup(u)}>
                       Complete setup
                     </Button>
+                  )}
+                  {u.status === 'ACTIVE' && u.id !== me.data?.id && (
+                    <>
+                      <Button
+                        size="small"
+                        onClick={() => { setNewRole(u.role); setRoleTarget(u); }}
+                      >
+                        Change role
+                      </Button>
+                      <Button size="small" color="error" onClick={() => setDeactTarget(u)}>
+                        Deactivate
+                      </Button>
+                    </>
                   )}
                 </TableCell>
               </TableRow>
@@ -144,6 +176,52 @@ export default function AdminUsersPage() {
             onClick={() => activate.mutate()}
           >
             Activate
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ---- Change role ---- */}
+      <Dialog open={Boolean(roleTarget)} onClose={() => setRoleTarget(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Change role — {roleTarget?.displayName}</DialogTitle>
+        <DialogContent>
+          <TextField
+            select fullWidth label="Role" value={newRole} sx={{ mt: 1 }}
+            onChange={(e) => setNewRole(e.target.value as Role)}
+            helperText="Takes effect on their next page load."
+          >
+            {(['EMPLOYEE', 'MANAGER', 'ADMIN'] as Role[]).map((r) => (
+              <MenuItem key={r} value={r}>{r.toLowerCase()}</MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRoleTarget(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={changeRole.isPending || newRole === roleTarget?.role}
+            onClick={() => changeRole.mutate()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ---- Deactivate ---- */}
+      <Dialog open={Boolean(deactTarget)} onClose={() => setDeactTarget(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Deactivate {deactTarget?.displayName}?</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            They will no longer be able to sign in. Their timesheets and history are kept, and an
+            administrator can reactivate them later.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeactTarget(null)}>Cancel</Button>
+          <Button
+            variant="contained" color="error" disabled={deactivate.isPending}
+            onClick={() => deactivate.mutate()}
+          >
+            Deactivate
           </Button>
         </DialogActions>
       </Dialog>

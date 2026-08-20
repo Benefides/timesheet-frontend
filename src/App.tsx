@@ -9,6 +9,8 @@ import TimesheetPage from './pages/TimesheetPage';
 import ApprovalsPage from './pages/ApprovalsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminTimesheetsPage from './pages/AdminTimesheetsPage';
+import AdminProjectsPage from './pages/AdminProjectsPage';
+import EmployeeTimesheetsPage from './pages/EmployeeTimesheetsPage';
 
 function Centered({ children }: { children: ReactNode }) {
   return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>{children}</Box>;
@@ -72,6 +74,8 @@ function AuthenticatedApp() {
         <Route path="/timesheet" element={<TimesheetPage />} />
         {canApprove && <Route path="/approvals" element={<ApprovalsPage />} />}
         {isAdmin && <Route path="/admin/users" element={<AdminUsersPage />} />}
+        {isAdmin && <Route path="/admin/projects" element={<AdminProjectsPage />} />}
+        {isAdmin && <Route path="/admin/employees/:employeeId" element={<EmployeeTimesheetsPage />} />}
         {canApprove && <Route path="/admin/timesheets" element={<AdminTimesheetsPage />} />}
         <Route path="*" element={<Navigate to="/timesheet" replace />} />
       </Routes>
