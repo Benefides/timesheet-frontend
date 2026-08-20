@@ -39,8 +39,10 @@ export default function WeekDaysView({
       <Stack direction="row" spacing={1}>
         {days.map((day) => {
           const isSelected = selectedDate && day.isSame(selectedDate, 'day');
-          const week = weekMap.get(day.format('YYYY-MM-DD'));
-          const dayTotal = week?.entries
+          // All seven days belong to the SAME timesheet — the one keyed by the
+          // week's Monday. Looking each day up by its own date only ever hit
+          // for Monday, so Tue–Sun rendered "—" whatever was recorded.
+          const dayTotal = weekOfTheWeek?.entries
             .filter((e) => dayjs(e.workDate).isSame(day, 'day'))
             .reduce((sum, e) => sum + Number(e.hours), 0) ?? 0;
 
