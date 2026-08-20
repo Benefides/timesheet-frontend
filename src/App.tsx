@@ -75,8 +75,8 @@ function AuthenticatedApp() {
         <Route path="/timesheet" element={<TimesheetPage />} />
         {canApprove && <Route path="/approvals" element={<ApprovalsPage />} />}
         {isAdmin && <Route path="/admin/users" element={<AdminUsersPage />} />}
-        {isAdmin && <Route path="/admin/projects" element={<AdminProjectsPage />} />}
-        {isAdmin && <Route path="/admin/org" element={<OrgChartPage />} />}
+        {canApprove && <Route path="/admin/projects" element={<AdminProjectsPage />} />}
+        <Route path="/admin/org" element={<OrgChartPage />} />
         {isAdmin && <Route path="/admin/employees/:employeeId" element={<EmployeeTimesheetsPage />} />}
         {canApprove && <Route path="/admin/timesheets" element={<AdminTimesheetsPage />} />}
         <Route path="*" element={<Navigate to="/timesheet" replace />} />

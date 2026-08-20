@@ -3,9 +3,10 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import type { TeamTimesheet, TimesheetStatus } from '../../lib/types';
 
-const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'success' | 'warning'> = {
+const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
   SUBMITTED: 'info',
+  MANAGER_APPROVED: 'secondary',
   APPROVED: 'success',
   REJECTED: 'warning',
 };

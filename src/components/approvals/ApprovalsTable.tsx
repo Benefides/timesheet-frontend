@@ -1,4 +1,4 @@
-import { Button, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { PendingItem } from '../../lib/types';
 
@@ -8,6 +8,8 @@ interface ApprovalsTableProps {
   onReject: (item: PendingItem) => void;
   onApprove: (id: string) => void;
   approvePending: boolean;
+  onRevert: (id: string) => void;
+  revertPending: boolean;
 }
 
 export default function ApprovalsTable({
@@ -16,6 +18,8 @@ export default function ApprovalsTable({
   onReject,
   onApprove,
   approvePending,
+  onRevert,
+  revertPending,
 }: ApprovalsTableProps) {
   return (
     <Paper variant="outlined">
@@ -27,6 +31,7 @@ export default function ApprovalsTable({
             <TableCell align="right">Total</TableCell>
             <TableCell align="right">Billable</TableCell>
             <TableCell>Submitted</TableCell>
+            <TableCell>Stage</TableCell>
             <TableCell align="right">Decision</TableCell>
           </TableRow>
         </TableHead>
@@ -39,8 +44,18 @@ export default function ApprovalsTable({
                 <TableCell align="right">{t.totalHours} h</TableCell>
                 <TableCell align="right">{t.billableHours} h</TableCell>
                 <TableCell>{t.submittedAt ? dayjs(t.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
+                <TableCell>
+                  <Chip
+                    size="small"
+                    label={t.status === 'MANAGER_APPROVED' ? 'manager approved' : 'submitted'}
+                    color={t.status === 'MANAGER_APPROVED' ? 'secondary' : 'info'}
+                  />
+                </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    <Button size="small" disabled={revertPending} onClick={() => onRevert(t.id)}>
+                      Revert to draft
+                    </Button>
                     <Button size="small" color="error" onClick={() => onReject(t)}>
                       Reject
                     </Button>
@@ -50,7 +65,7 @@ export default function ApprovalsTable({
                       disabled={approvePending}
                       onClick={() => onApprove(t.id)}
                     >
-                      Approve
+                      {t.status === 'MANAGER_APPROVED' ? 'Final approve' : 'Approve'}
                     </Button>
                   </Stack>
                 </TableCell>
@@ -58,7 +73,7 @@ export default function ApprovalsTable({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6}>
+              <TableCell colSpan={7}>
                 <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
                   {isLoading ? 'Loading…' : "Nothing waiting for approval. You're all caught up."}
                 </Typography>

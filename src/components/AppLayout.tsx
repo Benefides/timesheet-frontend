@@ -9,8 +9,8 @@ const NAV: { to: string; label: string; roles: Me['role'][] }[] = [
   { to: '/approvals', label: 'Approvals', roles: ['MANAGER', 'ADMIN'] },
   { to: '/admin/timesheets', label: 'View timesheets', roles: ['MANAGER', 'ADMIN'] },
   { to: '/admin/users', label: 'People', roles: ['ADMIN'] },
-  { to: '/admin/projects', label: 'Projects', roles: ['ADMIN'] },
-  { to: '/admin/org', label: 'Organisation', roles: ['ADMIN'] },
+  { to: '/admin/projects', label: 'Projects', roles: ['MANAGER', 'ADMIN'] },
+  { to: '/admin/org', label: 'Organisation', roles: ['EMPLOYEE', 'MANAGER', 'ADMIN'] },
 ];
 
 export default function AppLayout({ me, children }: { me: Me; children: ReactNode }) {

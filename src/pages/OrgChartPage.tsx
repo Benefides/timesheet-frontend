@@ -7,6 +7,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
+import { useMe } from '../lib/hooks';
 import type { AdminUser, Department, Role } from '../lib/types';
 
 const ROLE_COLOR: Record<Role, 'default' | 'primary' | 'secondary'> = {
@@ -49,9 +50,14 @@ export default function OrgChartPage() {
   const [target, setTarget] = useState<AdminUser | null>(null);
   const [managerId, setManagerId] = useState('');
 
+  const me = useMe();
+  const isAdmin = me.data?.role === 'ADMIN';
+
+  // Role-scoped on the server: employees get their own team, managers their
+  // subtree, admins the whole organisation.
   const users = useQuery<AdminUser[]>({
-    queryKey: ['admin-users'],
-    queryFn: async () => (await api.get('/users')).data,
+    queryKey: ['org-users'],
+    queryFn: async () => (await api.get('/users/team')).data,
   });
 
   const forest = useMemo(() => buildForest(users.data ?? []), [users.data]);
@@ -74,6 +80,7 @@ export default function OrgChartPage() {
       api.patch(`/users/${target!.id}/manager`, { managerId: managerId || null }),
     onSuccess: () => {
       setTarget(null);
+      qc.invalidateQueries({ queryKey: ['org-users'] });
       qc.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (e) => setError(apiErrorMessage(e)),
@@ -106,7 +113,7 @@ export default function OrgChartPage() {
         </Stack>
       </Paper>
 
-      <DepartmentsCard onError={setError} />
+      {isAdmin && <DepartmentsCard onError={setError} />}
 
       <Dialog open={Boolean(target)} onClose={() => setTarget(null)} fullWidth maxWidth="xs">
         <DialogTitle>Manager for {target?.displayName}</DialogTitle>
@@ -164,11 +171,13 @@ export default function OrgChartPage() {
               {node.children.length} report{node.children.length === 1 ? '' : 's'}
             </Typography>
           )}
-          <Box className="row-actions" sx={{ visibility: 'hidden', ml: 'auto' }}>
-            <Button size="small" onClick={() => onSetManager(u)}>
-              {u.managerId ? 'Change manager' : 'Set manager'}
-            </Button>
-          </Box>
+          {isAdmin && (
+            <Box className="row-actions" sx={{ visibility: 'hidden', ml: 'auto' }}>
+              <Button size="small" onClick={() => onSetManager(u)}>
+                {u.managerId ? 'Change manager' : 'Set manager'}
+              </Button>
+            </Box>
+          )}
         </Stack>
         {node.children.map((c) => (
           <TreeRow key={c.user.id} node={c} depth={depth + 1} onSetManager={onSetManager} />

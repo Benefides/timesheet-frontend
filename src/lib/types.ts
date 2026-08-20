@@ -1,6 +1,6 @@
 export type Role = 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
 export type UserStatus = 'PENDING_SETUP' | 'ACTIVE' | 'DISABLED';
-export type TimesheetStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+export type TimesheetStatus = 'DRAFT' | 'SUBMITTED' | 'MANAGER_APPROVED' | 'APPROVED' | 'REJECTED';
 
 export interface Me {
   id: string;
@@ -41,6 +41,7 @@ export interface Timesheet {
 
 export interface PendingItem {
   id: string;
+  status: TimesheetStatus;
   weekStart: string;
   totalHours: string;
   billableHours: string;

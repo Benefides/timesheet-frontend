@@ -27,6 +27,12 @@ export default function ApprovalsPage() {
     onError: (e) => setError(apiErrorMessage(e)),
   });
 
+  const revert = useMutation({
+    mutationFn: async (id: string) => api.post(`/timesheets/${id}/reopen`),
+    onSuccess: invalidate,
+    onError: (e) => setError(apiErrorMessage(e)),
+  });
+
   const doReject = useMutation({
     mutationFn: async () => api.post(`/timesheets/${reject!.id}/reject`, { comment }),
     onSuccess: () => {
@@ -52,6 +58,8 @@ export default function ApprovalsPage() {
         onReject={setReject}
         onApprove={(id) => approve.mutate(id)}
         approvePending={approve.isPending}
+        onRevert={(id) => revert.mutate(id)}
+        revertPending={revert.isPending}
       />
 
       <RejectDialog

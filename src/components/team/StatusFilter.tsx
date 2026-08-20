@@ -3,7 +3,7 @@ import type { TimesheetStatus } from '../../lib/types';
 
 type Status = TimesheetStatus | 'ALL';
 
-const STATUSES: Status[] = ['ALL', 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED'];
+const STATUSES: Status[] = ['ALL', 'DRAFT', 'SUBMITTED', 'MANAGER_APPROVED', 'APPROVED', 'REJECTED'];
 
 interface StatusFilterProps {
   value: Status;

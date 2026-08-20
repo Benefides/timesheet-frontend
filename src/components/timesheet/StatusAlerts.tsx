@@ -18,6 +18,9 @@ export default function StatusAlerts({ timesheet, error, onErrorClear }: StatusA
           Submitted and awaiting approval. You can still add time and resubmit until it's decided.
         </Alert>
       )}
+      {timesheet?.status === 'MANAGER_APPROVED' && (
+        <Alert severity="info">Approved by your manager — awaiting final admin approval.</Alert>
+      )}
       {timesheet?.status === 'APPROVED' && (
         <Alert severity="success">Approved and locked. Approved time can't be edited.</Alert>
       )}

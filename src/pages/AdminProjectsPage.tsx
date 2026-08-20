@@ -8,6 +8,7 @@ import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
+import { useMe } from '../lib/hooks';
 import type { AdminAssignment, AdminProject, AdminUser } from '../lib/types';
 
 /** An assignment currently in force (its window covers today). */
@@ -23,9 +24,12 @@ export default function AdminProjectsPage() {
     queryKey: ['admin-projects'],
     queryFn: async () => (await api.get('/projects')).data,
   });
+  const me = useMe();
+  const isAdmin = me.data?.role === 'ADMIN';
+  // Role-scoped: managers see (and can enroll) their own team; admins everyone.
   const users = useQuery<AdminUser[]>({
-    queryKey: ['admin-users'],
-    queryFn: async () => (await api.get('/users')).data,
+    queryKey: ['org-users'],
+    queryFn: async () => (await api.get('/users/team')).data,
   });
   const activeUsers = (users.data ?? []).filter((u) => u.status === 'ACTIVE');
 
@@ -164,7 +168,7 @@ export default function AdminProjectsPage() {
           onClose={() => setEditing(null)}
           onSave={(patch) => update.mutate(patch)}
           saving={update.isPending}
-          onDelete={() => remove.mutate()}
+          onDelete={isAdmin ? () => remove.mutate() : undefined}
           deleting={remove.isPending}
         />
       )}
@@ -189,7 +193,7 @@ function EditProjectDialog({
   onClose: () => void;
   onSave: (patch: { name: string; isBillable: boolean; isActive: boolean }) => void;
   saving: boolean;
-  onDelete: () => void;
+  onDelete?: () => void;
   deleting: boolean;
 }) {
   const [form, setForm] = useState({
@@ -226,14 +230,16 @@ function EditProjectDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button
-          color="error"
-          sx={{ mr: 'auto' }}
-          disabled={deleting}
-          onClick={() => (confirmingDelete ? onDelete() : setConfirmingDelete(true))}
-        >
-          {confirmingDelete ? 'Really delete?' : 'Delete'}
-        </Button>
+        {onDelete && (
+          <Button
+            color="error"
+            sx={{ mr: 'auto' }}
+            disabled={deleting}
+            onClick={() => (confirmingDelete ? onDelete() : setConfirmingDelete(true))}
+          >
+            {confirmingDelete ? 'Really delete?' : 'Delete'}
+          </Button>
+        )}
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
