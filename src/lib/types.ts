@@ -64,8 +64,10 @@ export interface AdminUser {
   id: string;
   email: string;
   displayName: string;
+  employeeCode?: string | null;
   role: Role;
   status: UserStatus;
+  managerId?: string | null;
 }
 
 export interface AdminProject extends Project {
