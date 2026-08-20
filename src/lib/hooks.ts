@@ -20,7 +20,7 @@ export function useMyProjects() {
 export function useMyTimesheets() {
   return useQuery<Timesheet[]>({
     queryKey: ['my-timesheets'],
-    queryFn: async () => (await api.get('/timesheets')).data,
+    queryFn: async () => (await api.get('/timesheets/mine')).data,
     staleTime: 60_000,
   });
 }

@@ -28,7 +28,7 @@ export default function TimesheetPage() {
   // Fetch all timesheets for the chart
   const allTimesheets = useQuery<Timesheet[]>({
     queryKey: ['my-timesheets-all'],
-    queryFn: async () => (await api.get('/timesheets')).data,
+    queryFn: async () => (await api.get('/timesheets/mine')).data,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
