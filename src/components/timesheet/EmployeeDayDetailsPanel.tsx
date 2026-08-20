@@ -1,11 +1,12 @@
 import {
-  Alert, Button, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableCell,
+  Alert, Button, IconButton, Paper, Stack, Table, TableBody, TableCell,
   TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { Project, Timesheet } from '../../lib/types';
+import ProjectPicker from './ProjectPicker';
 
 interface FormData {
   projectId: string;
@@ -132,22 +133,14 @@ export default function EmployeeDayDetailsPanel({
             </Alert>
           ) : (
             <Stack spacing={2}>
-              <TextField
-                select
-                label="Project"
-                size="small"
+              <ProjectPicker
+                projects={projects}
                 value={form.projectId}
-                onChange={(e) => {
-                  const p = projects.find((x) => x.id === e.target.value);
-                  onFormChange({ ...form, projectId: e.target.value, isBillable: p?.isBillable ?? true });
-                }}
-              >
-                {projects.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.code}
-                  </MenuItem>
-                ))}
-              </TextField>
+                size="small"
+                onChange={(p) =>
+                  onFormChange({ ...form, projectId: p?.id ?? '', isBillable: p?.isBillable ?? true })
+                }
+              />
               <TextField
                 label="Hours"
                 type="number"

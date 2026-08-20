@@ -1,6 +1,7 @@
 import { Alert, Button, Card, CardContent, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { Project } from '../../lib/types';
+import ProjectPicker from './ProjectPicker';
 
 interface AddEntryFormState {
   projectId: string;
@@ -42,22 +43,14 @@ export default function AddEntryForm({
           </Alert>
         ) : (
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="flex-start">
-            <TextField
-              select
-              label="Project"
-              sx={{ minWidth: 160 }}
+            <ProjectPicker
+              projects={projects}
               value={form.projectId}
-              onChange={(e) => {
-                const p = projects.find((x) => x.id === e.target.value);
-                onFormChange({ ...form, projectId: e.target.value, isBillable: p?.isBillable ?? true });
-              }}
-            >
-              {projects.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.code}
-                </MenuItem>
-              ))}
-            </TextField>
+              sx={{ minWidth: 240 }}
+              onChange={(p) =>
+                onFormChange({ ...form, projectId: p?.id ?? '', isBillable: p?.isBillable ?? true })
+              }
+            />
             <TextField
               select
               label="Day"
