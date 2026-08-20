@@ -107,13 +107,21 @@ export default function TimesheetPage() {
       <EmployeeWeekNavigation weekStart={weekStart} onWeekChange={(w) => {
         setWeekStart(w);
         setSelectedDate(null);
+        // Keep the entry form's date inside the week being viewed — a stale
+        // date would file the entry into a different week than the one shown.
+        setForm((f) => ({ ...f, workDate: w.format('YYYY-MM-DD') }));
       }} />
 
       <EmployeeWeekDaysView
         weekStart={weekStart}
         timesheet={ts}
         selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
+        onSelectDate={(day) => {
+          setSelectedDate(day);
+          // The day panel's Add button posts form.workDate; it must always be
+          // the day on screen, not whatever the form was initialised with.
+          setForm((f) => ({ ...f, workDate: day.format('YYYY-MM-DD') }));
+        }}
         editable={editable}
       />
 
