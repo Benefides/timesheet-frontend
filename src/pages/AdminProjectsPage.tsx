@@ -54,6 +54,16 @@ export default function AdminProjectsPage() {
     onError: (e) => setError(apiErrorMessage(e)),
   });
 
+  const remove = useMutation({
+    mutationFn: async () => api.delete(`/projects/${editing!.id}`),
+    onSuccess: () => {
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ['admin-projects'] });
+    },
+    // A 409 lands here when the project has recorded time — archive instead.
+    onError: (e) => { setEditing(null); setError(apiErrorMessage(e)); },
+  });
+
   // ---- Enrollment ----
   const [managing, setManaging] = useState<AdminProject | null>(null);
 
@@ -154,6 +164,8 @@ export default function AdminProjectsPage() {
           onClose={() => setEditing(null)}
           onSave={(patch) => update.mutate(patch)}
           saving={update.isPending}
+          onDelete={() => remove.mutate()}
+          deleting={remove.isPending}
         />
       )}
 
@@ -171,16 +183,19 @@ export default function AdminProjectsPage() {
 }
 
 function EditProjectDialog({
-  project, onClose, onSave, saving,
+  project, onClose, onSave, saving, onDelete, deleting,
 }: {
   project: AdminProject;
   onClose: () => void;
   onSave: (patch: { name: string; isBillable: boolean; isActive: boolean }) => void;
   saving: boolean;
+  onDelete: () => void;
+  deleting: boolean;
 }) {
   const [form, setForm] = useState({
     name: project.name, isBillable: project.isBillable, isActive: project.isActive,
   });
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Edit {project.code}</DialogTitle>
@@ -211,6 +226,14 @@ function EditProjectDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
+        <Button
+          color="error"
+          sx={{ mr: 'auto' }}
+          disabled={deleting}
+          onClick={() => (confirmingDelete ? onDelete() : setConfirmingDelete(true))}
+        >
+          {confirmingDelete ? 'Really delete?' : 'Delete'}
+        </Button>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"

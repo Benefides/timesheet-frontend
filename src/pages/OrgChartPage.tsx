@@ -7,7 +7,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
-import type { AdminUser, Role } from '../lib/types';
+import type { AdminUser, Department, Role } from '../lib/types';
 
 const ROLE_COLOR: Record<Role, 'default' | 'primary' | 'secondary'> = {
   EMPLOYEE: 'default', MANAGER: 'primary', ADMIN: 'secondary',
@@ -106,6 +106,8 @@ export default function OrgChartPage() {
         </Stack>
       </Paper>
 
+      <DepartmentsCard onError={setError} />
+
       <Dialog open={Boolean(target)} onClose={() => setTarget(null)} fullWidth maxWidth="xs">
         <DialogTitle>Manager for {target?.displayName}</DialogTitle>
         <DialogContent>
@@ -183,4 +185,121 @@ function findNode(forest: TreeNode[], id: string): TreeNode | null {
     if (hit) return hit;
   }
   return null;
+}
+
+function DepartmentsCard({ onError }: { onError: (msg: string) => void }) {
+  const qc = useQueryClient();
+  const [draft, setDraft] = useState({ name: '', costCode: '' });
+  const [editing, setEditing] = useState<Department | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', costCode: '' });
+
+  const departments = useQuery<Department[]>({
+    queryKey: ['departments'],
+    queryFn: async () => (await api.get('/departments')).data,
+  });
+
+  const refresh = () => qc.invalidateQueries({ queryKey: ['departments'] });
+
+  const create = useMutation({
+    mutationFn: async () =>
+      api.post('/departments', {
+        name: draft.name.trim(),
+        ...(draft.costCode.trim() ? { costCode: draft.costCode.trim() } : {}),
+      }),
+    onSuccess: () => { setDraft({ name: '', costCode: '' }); refresh(); },
+    onError: (e) => onError(apiErrorMessage(e)),
+  });
+
+  const rename = useMutation({
+    mutationFn: async () =>
+      api.patch(`/departments/${editing!.id}`, {
+        name: editForm.name.trim(),
+        ...(editForm.costCode.trim() ? { costCode: editForm.costCode.trim() } : {}),
+      }),
+    onSuccess: () => { setEditing(null); refresh(); },
+    onError: (e) => onError(apiErrorMessage(e)),
+  });
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      <Typography variant="subtitle1" sx={{ mb: 0.5 }}>Departments</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Assigned to each person during activation on the People page.
+      </Typography>
+
+      <Stack spacing={1} sx={{ mb: 2 }}>
+        {(departments.data ?? []).map((d) => (
+          <Stack
+            key={d.id} direction="row" alignItems="center" spacing={1}
+            sx={{
+              py: 0.5, px: 1, borderRadius: 1,
+              '&:hover': { bgcolor: 'action.hover' },
+              '&:hover .row-actions': { visibility: 'visible' },
+            }}
+          >
+            <Typography>{d.name}</Typography>
+            {d.costCode && (
+              <Chip size="small" variant="outlined" label={d.costCode} sx={{ fontFamily: 'monospace' }} />
+            )}
+            <Box className="row-actions" sx={{ visibility: 'hidden', ml: 'auto' }}>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditForm({ name: d.name, costCode: d.costCode ?? '' });
+                  setEditing(d);
+                }}
+              >
+                Rename
+              </Button>
+            </Box>
+          </Stack>
+        ))}
+        {departments.isLoading && <Typography variant="body2">Loading…</Typography>}
+      </Stack>
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+        <TextField
+          size="small" label="New department" value={draft.name}
+          onChange={(e) => setDraft((f) => ({ ...f, name: e.target.value }))}
+        />
+        <TextField
+          size="small" label="Cost code (optional)" value={draft.costCode}
+          onChange={(e) => setDraft((f) => ({ ...f, costCode: e.target.value }))}
+        />
+        <Button
+          variant="contained"
+          disabled={!draft.name.trim() || create.isPending}
+          onClick={() => create.mutate()}
+        >
+          Add
+        </Button>
+      </Stack>
+
+      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Rename {editing?.name}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Name" value={editForm.name}
+              onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+            />
+            <TextField
+              label="Cost code" value={editForm.costCode}
+              onChange={(e) => setEditForm((f) => ({ ...f, costCode: e.target.value }))}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditing(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={!editForm.name.trim() || rename.isPending}
+            onClick={() => rename.mutate()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
+  );
 }

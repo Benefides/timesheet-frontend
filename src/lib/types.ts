@@ -74,6 +74,12 @@ export interface AdminProject extends Project {
   isActive: boolean;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  costCode: string | null;
+}
+
 export interface AdminAssignment {
   id: string;
   userId: string;
