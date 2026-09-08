@@ -3,6 +3,7 @@ import { Box, CircularProgress, Grid, Stack } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api, apiErrorMessage } from '../lib/api';
+import { toDecimalHours } from '../lib/duration';
 import { useMyProjects } from '../lib/hooks';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
 import type { Timesheet } from '../lib/types';
@@ -43,22 +44,26 @@ export default function TimesheetPage() {
     projectId: '',
     workDate: weekStartStr,
     hours: '',
+    minutes: '',
     description: '',
     isBillable: true,
   });
   const [error, setError] = useState<string | null>(null);
+
+  // Hours and minutes are entered separately and sent as decimal hours.
+  const duration = toDecimalHours(form.hours, form.minutes);
 
   const addEntry = useMutation({
     mutationFn: async () =>
       (await api.post(`/timesheets/weeks/${weekStartStr}/entries`, {
         projectId: form.projectId,
         workDate: form.workDate,
-        hours: Number(form.hours),
+        hours: duration,
         isBillable: form.isBillable,
         description: form.description,
       })).data,
     onSuccess: () => {
-      setForm((f) => ({ ...f, hours: '', description: '', projectId: '' }));
+      setForm((f) => ({ ...f, hours: '', minutes: '', description: '', projectId: '' }));
       setError(null);
       qc.invalidateQueries({ queryKey: ['timesheet', weekStartStr] });
     },
@@ -79,8 +84,11 @@ export default function TimesheetPage() {
     onError: (e) => setError(apiErrorMessage(e)),
   });
 
+  // Either part may be blank — 45 minutes with no hours is a valid entry.
+  // The 24 h ceiling matches the server's, so an over-long entry is refused
+  // here rather than as a validation error after the round trip.
   const canAdd = Boolean(
-    form.projectId && form.hours && Number(form.hours) > 0 && form.description.trim(),
+    form.projectId && duration > 0 && duration <= 24 && form.description.trim(),
   );
 
   if (isLoading) {

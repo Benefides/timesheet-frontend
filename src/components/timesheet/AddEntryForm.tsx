@@ -7,6 +7,7 @@ interface AddEntryFormState {
   projectId: string;
   workDate: string;
   hours: string;
+  minutes: string;
   description: string;
   isBillable: boolean;
 }
@@ -69,8 +70,16 @@ export default function AddEntryForm({
               type="number"
               sx={{ width: 100 }}
               value={form.hours}
-              inputProps={{ min: 0, max: 24, step: 0.25 }}
+              inputProps={{ min: 0, max: 24, step: 1 }}
               onChange={(e) => onFormChange({ ...form, hours: e.target.value })}
+            />
+            <TextField
+              label="Minutes"
+              type="number"
+              sx={{ width: 100 }}
+              value={form.minutes}
+              inputProps={{ min: 0, max: 59, step: 5 }}
+              onChange={(e) => onFormChange({ ...form, minutes: e.target.value })}
             />
             <TextField
               label="Description"

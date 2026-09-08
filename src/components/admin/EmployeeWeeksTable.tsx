@@ -6,6 +6,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import dayjs from 'dayjs';
 import type { TeamTimesheet, TimesheetStatus } from '../../lib/types';
+import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -61,8 +62,8 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                   <TableCell>
                     <Chip size="small" label={w.status.toLowerCase()} color={STATUS_COLOR[w.status]} />
                   </TableCell>
-                  <TableCell align="right">{w.totalHours} h</TableCell>
-                  <TableCell align="right">{w.billableHours} h</TableCell>
+                  <TableCell align="right">{formatHours(w.totalHours)}</TableCell>
+                  <TableCell align="right">{formatHours(w.billableHours)}</TableCell>
                   <TableCell>{w.submittedAt ? dayjs(w.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
                   <TableCell>{w.decidedAt ? dayjs(w.decidedAt).format('D MMM, HH:mm') : '—'}</TableCell>
                 </TableRow>
@@ -75,7 +76,7 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                           const day = dayjs(w.weekStart).add(i, 'day');
                           const dayKey = day.format('YYYY-MM-DD');
                           const dayEntries = w.entries.filter((e) => dayjs(e.workDate).format('YYYY-MM-DD') === dayKey);
-                          const dayTotal = dayEntries.reduce((sum, e) => sum + Number(e.hours), 0);
+                          const dayTotal = sumMinutes(dayEntries);
 
                           if (!dayEntries.length && dayTotal === 0) return null;
 
@@ -86,7 +87,7 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                                   {day.format('dddd, D MMM')}
                                 </Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {dayTotal ? `${dayTotal} h` : '—'}
+                                  {dayTotal ? formatMinutes(dayTotal) : '—'}
                                 </Typography>
                               </Stack>
                               {dayEntries.length ? (
@@ -95,7 +96,7 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                                     <TableRow>
                                       <TableCell>Project</TableCell>
                                       <TableCell>Description</TableCell>
-                                      <TableCell align="right">Hours</TableCell>
+                                      <TableCell align="right">Time</TableCell>
                                       <TableCell>Type</TableCell>
                                     </TableRow>
                                   </TableHead>
@@ -104,7 +105,7 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                                       <TableRow key={e.id}>
                                         <TableCell>{e.project?.code ?? '—'}</TableCell>
                                         <TableCell>{e.description}</TableCell>
-                                        <TableCell align="right">{e.hours}</TableCell>
+                                        <TableCell align="right">{formatHours(e.hours)}</TableCell>
                                         <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                                       </TableRow>
                                     ))}

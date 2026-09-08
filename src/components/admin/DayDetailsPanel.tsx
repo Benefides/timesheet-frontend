@@ -2,6 +2,7 @@ import { Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typogra
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { TeamTimesheet } from '../../lib/types';
+import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 
 interface DayDetailsPanelProps {
   selectedDate: Dayjs | null;
@@ -24,10 +25,8 @@ export default function DayDetailsPanel({ selectedDate, weeks }: DayDetailsPanel
     w.entries.filter((e) => dayjs(e.workDate).isSame(selectedDate, 'day')),
   );
 
-  const dayTotal = allEntries.reduce((sum, e) => sum + Number(e.hours), 0);
-  const billableTotal = allEntries
-    .filter((e) => e.isBillable)
-    .reduce((sum, e) => sum + Number(e.hours), 0);
+  const dayTotal = sumMinutes(allEntries);
+  const billableTotal = sumMinutes(allEntries.filter((e) => e.isBillable));
 
   return (
     <Stack spacing={2}>
@@ -38,15 +37,17 @@ export default function DayDetailsPanel({ selectedDate, weeks }: DayDetailsPanel
         <Stack direction="row" spacing={2}>
           <div>
             <Typography variant="caption" color="text.secondary">
-              Total hours
+              Total time
             </Typography>
-            <Typography variant="h6">{dayTotal ? `${dayTotal} h` : '—'}</Typography>
+            <Typography variant="h6">{dayTotal ? formatMinutes(dayTotal) : '—'}</Typography>
           </div>
           <div>
             <Typography variant="caption" color="text.secondary">
               Billable
             </Typography>
-            <Typography variant="h6">{billableTotal ? `${billableTotal} h` : '—'}</Typography>
+            <Typography variant="h6">
+              {billableTotal ? formatMinutes(billableTotal) : '—'}
+            </Typography>
           </div>
         </Stack>
       </Paper>
@@ -58,7 +59,7 @@ export default function DayDetailsPanel({ selectedDate, weeks }: DayDetailsPanel
               <TableRow>
                 <TableCell>Project</TableCell>
                 <TableCell>Description</TableCell>
-                <TableCell align="right">Hours</TableCell>
+                <TableCell align="right">Time</TableCell>
                 <TableCell>Type</TableCell>
               </TableRow>
             </TableHead>
@@ -67,7 +68,7 @@ export default function DayDetailsPanel({ selectedDate, weeks }: DayDetailsPanel
                 <TableRow key={e.id}>
                   <TableCell>{e.project?.code ?? '—'}</TableCell>
                   <TableCell>{e.description}</TableCell>
-                  <TableCell align="right">{e.hours}</TableCell>
+                  <TableCell align="right">{formatHours(e.hours)}</TableCell>
                   <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                 </TableRow>
               ))}

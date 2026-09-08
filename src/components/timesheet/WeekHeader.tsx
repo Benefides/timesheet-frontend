@@ -1,6 +1,7 @@
 import { Box, Chip, Stack, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { Timesheet, TimesheetStatus } from '../../lib/types';
+import { formatHours } from '../../lib/duration';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -24,7 +25,7 @@ export default function WeekHeader({ weekStart, timesheet }: WeekHeaderProps) {
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
           <Chip label={timesheet.status} color={STATUS_COLOR[timesheet.status]} />
           <Typography variant="body2" color="text.secondary">
-            {timesheet.totalHours} h total · {timesheet.billableHours} h billable
+            {formatHours(timesheet.totalHours)} total · {formatHours(timesheet.billableHours)} billable
           </Typography>
         </Stack>
       )}

@@ -1,6 +1,7 @@
 import { Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { PendingItem } from '../../lib/types';
+import { formatHours } from '../../lib/duration';
 
 interface ApprovalsTableProps {
   items: PendingItem[];
@@ -41,8 +42,8 @@ export default function ApprovalsTable({
               <TableRow key={t.id} hover>
                 <TableCell>{t.user.displayName}</TableCell>
                 <TableCell>{dayjs(t.weekStart).format('D MMM YYYY')}</TableCell>
-                <TableCell align="right">{t.totalHours} h</TableCell>
-                <TableCell align="right">{t.billableHours} h</TableCell>
+                <TableCell align="right">{formatHours(t.totalHours)}</TableCell>
+                <TableCell align="right">{formatHours(t.billableHours)}</TableCell>
                 <TableCell>{t.submittedAt ? dayjs(t.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
                 <TableCell>
                   <Chip

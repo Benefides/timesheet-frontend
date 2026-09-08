@@ -2,6 +2,7 @@ import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import type { TeamTimesheet, TimesheetStatus } from '../../lib/types';
+import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -42,9 +43,9 @@ export default function WeekDaysView({
           // All seven days belong to the SAME timesheet — the one keyed by the
           // week's Monday. Looking each day up by its own date only ever hit
           // for Monday, so Tue–Sun rendered "—" whatever was recorded.
-          const dayTotal = weekOfTheWeek?.entries
-            .filter((e) => dayjs(e.workDate).isSame(day, 'day'))
-            .reduce((sum, e) => sum + Number(e.hours), 0) ?? 0;
+          const dayTotal = sumMinutes(
+            weekOfTheWeek?.entries.filter((e) => dayjs(e.workDate).isSame(day, 'day')) ?? [],
+          );
 
           return (
             <Button
@@ -63,7 +64,7 @@ export default function WeekDaysView({
               <Typography variant="subtitle2">{day.format('ddd')}</Typography>
               <Typography variant="h6">{day.format('D')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                {dayTotal ? `${dayTotal} h` : '—'}
+                {dayTotal ? formatMinutes(dayTotal) : '—'}
               </Typography>
             </Button>
           );
@@ -80,7 +81,7 @@ export default function WeekDaysView({
             <Chip size="small" label={weekOfTheWeek.status.toLowerCase()} color={STATUS_COLOR[weekOfTheWeek.status]} />
           </Stack>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {weekOfTheWeek.totalHours} h · {weekOfTheWeek.billableHours} h billable
+            {formatHours(weekOfTheWeek.totalHours)} · {formatHours(weekOfTheWeek.billableHours)} billable
           </Typography>
         </Box>
       )}

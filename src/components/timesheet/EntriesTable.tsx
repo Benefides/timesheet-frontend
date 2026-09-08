@@ -4,6 +4,7 @@ import {
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import dayjs from 'dayjs';
+import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 import type { Timesheet, TimesheetEntry } from '../../lib/types';
 
 interface EntriesTableProps {
@@ -36,7 +37,7 @@ export default function EntriesTable({
         <TableHead>
           <TableRow>
             <TableCell>Project</TableCell>
-            <TableCell align="right">Hours</TableCell>
+            <TableCell align="right">Time</TableCell>
             <TableCell>Type</TableCell>
             <TableCell>Description</TableCell>
             <TableCell />
@@ -55,14 +56,14 @@ export default function EntriesTable({
             days.map((d) => {
               const key = d.format('YYYY-MM-DD');
               const dayEntries = entriesByDay.get(key) ?? [];
-              const dayTotal = dayEntries.reduce((sum, e) => sum + Number(e.hours), 0);
+              const dayTotal = sumMinutes(dayEntries);
               return (
                 <Fragment key={key}>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell colSpan={5} sx={{ fontWeight: 600 }}>
                       <Stack direction="row" justifyContent="space-between">
                         <span>{d.format('dddd, D MMM')}</span>
-                        <span>{dayTotal ? `${dayTotal} h` : '—'}</span>
+                        <span>{dayTotal ? formatMinutes(dayTotal) : '—'}</span>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -70,7 +71,7 @@ export default function EntriesTable({
                     dayEntries.map((e) => (
                       <TableRow key={e.id} hover>
                         <TableCell>{e.project?.code ?? '—'}</TableCell>
-                        <TableCell align="right">{e.hours}</TableCell>
+                        <TableCell align="right">{formatHours(e.hours)}</TableCell>
                         <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                         <TableCell>{e.description}</TableCell>
                         <TableCell align="right">

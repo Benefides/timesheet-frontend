@@ -6,12 +6,14 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { Project, Timesheet } from '../../lib/types';
+import { formatMinutes, sumMinutes, formatHours } from '../../lib/duration';
 import ProjectPicker from './ProjectPicker';
 
 interface FormData {
   projectId: string;
   workDate: string;
   hours: string;
+  minutes: string;
   description: string;
   isBillable: boolean;
 }
@@ -54,10 +56,8 @@ export default function EmployeeDayDetailsPanel({
   const dayEntries = timesheet?.entries.filter((e) =>
     dayjs(e.workDate).isSame(selectedDate, 'day'),
   ) ?? [];
-  const dayTotal = dayEntries.reduce((sum, e) => sum + Number(e.hours), 0);
-  const billableTotal = dayEntries
-    .filter((e) => e.isBillable)
-    .reduce((sum, e) => sum + Number(e.hours), 0);
+  const dayTotal = sumMinutes(dayEntries);
+  const billableTotal = sumMinutes(dayEntries.filter((e) => e.isBillable));
 
   return (
     <Stack spacing={2}>
@@ -68,15 +68,17 @@ export default function EmployeeDayDetailsPanel({
         <Stack direction="row" spacing={2}>
           <div>
             <Typography variant="caption" color="text.secondary">
-              Total hours
+              Total time
             </Typography>
-            <Typography variant="h6">{dayTotal ? `${dayTotal} h` : '—'}</Typography>
+            <Typography variant="h6">{dayTotal ? formatMinutes(dayTotal) : '—'}</Typography>
           </div>
           <div>
             <Typography variant="caption" color="text.secondary">
               Billable
             </Typography>
-            <Typography variant="h6">{billableTotal ? `${billableTotal} h` : '—'}</Typography>
+            <Typography variant="h6">
+              {billableTotal ? formatMinutes(billableTotal) : '—'}
+            </Typography>
           </div>
         </Stack>
       </Paper>
@@ -89,7 +91,7 @@ export default function EmployeeDayDetailsPanel({
               <TableRow>
                 <TableCell>Project</TableCell>
                 <TableCell>Description</TableCell>
-                <TableCell align="right">Hours</TableCell>
+                <TableCell align="right">Time</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell />
               </TableRow>
@@ -99,7 +101,7 @@ export default function EmployeeDayDetailsPanel({
                 <TableRow key={e.id}>
                   <TableCell>{e.project?.code ?? '—'}</TableCell>
                   <TableCell>{e.description}</TableCell>
-                  <TableCell align="right">{e.hours}</TableCell>
+                  <TableCell align="right">{formatHours(e.hours)}</TableCell>
                   <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                   <TableCell align="right">
                     {editable && (
@@ -141,14 +143,26 @@ export default function EmployeeDayDetailsPanel({
                   onFormChange({ ...form, projectId: p?.id ?? '', isBillable: p?.isBillable ?? true })
                 }
               />
-              <TextField
-                label="Hours"
-                type="number"
-                size="small"
-                value={form.hours}
-                inputProps={{ min: 0, max: 24, step: 0.25 }}
-                onChange={(e) => onFormChange({ ...form, hours: e.target.value })}
-              />
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="Hours"
+                  type="number"
+                  size="small"
+                  sx={{ flex: 1 }}
+                  value={form.hours}
+                  inputProps={{ min: 0, max: 24, step: 1 }}
+                  onChange={(e) => onFormChange({ ...form, hours: e.target.value })}
+                />
+                <TextField
+                  label="Minutes"
+                  type="number"
+                  size="small"
+                  sx={{ flex: 1 }}
+                  value={form.minutes}
+                  inputProps={{ min: 0, max: 59, step: 5 }}
+                  onChange={(e) => onFormChange({ ...form, minutes: e.target.value })}
+                />
+              </Stack>
               <TextField
                 label="Description"
                 size="small"

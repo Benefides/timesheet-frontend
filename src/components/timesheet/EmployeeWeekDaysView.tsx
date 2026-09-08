@@ -1,6 +1,7 @@
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Timesheet, TimesheetStatus } from '../../lib/types';
+import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -36,7 +37,7 @@ export default function EmployeeWeekDaysView({
           const dayEntries = timesheet?.entries.filter((e) =>
             dayjs(e.workDate).isSame(day, 'day'),
           ) ?? [];
-          const dayTotal = dayEntries.reduce((sum, e) => sum + Number(e.hours), 0);
+          const dayTotal = sumMinutes(dayEntries);
 
           return (
             <Button
@@ -56,7 +57,7 @@ export default function EmployeeWeekDaysView({
               <Typography variant="subtitle2">{day.format('ddd')}</Typography>
               <Typography variant="h6">{day.format('D')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                {dayTotal ? `${dayTotal} h` : '—'}
+                {dayTotal ? formatMinutes(dayTotal) : '—'}
               </Typography>
             </Button>
           );
@@ -73,7 +74,7 @@ export default function EmployeeWeekDaysView({
             <Chip size="small" label={timesheet.status.toLowerCase()} color={STATUS_COLOR[timesheet.status]} />
           </Stack>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {timesheet.totalHours} h · {timesheet.billableHours} h billable
+            {formatHours(timesheet.totalHours)} · {formatHours(timesheet.billableHours)} billable
           </Typography>
         </Box>
       )}

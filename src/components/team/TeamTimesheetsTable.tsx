@@ -7,6 +7,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import dayjs from 'dayjs';
 import type { TeamTimesheet, TimesheetStatus } from '../../lib/types';
+import { formatHours } from '../../lib/duration';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -61,8 +62,8 @@ export default function TeamTimesheetsTable({ items, isLoading }: TeamTimesheets
                   <TableCell>
                     <Chip size="small" label={t.status.toLowerCase()} color={STATUS_COLOR[t.status]} />
                   </TableCell>
-                  <TableCell align="right">{t.totalHours} h</TableCell>
-                  <TableCell align="right">{t.billableHours} h</TableCell>
+                  <TableCell align="right">{formatHours(t.totalHours)}</TableCell>
+                  <TableCell align="right">{formatHours(t.billableHours)}</TableCell>
                   <TableCell>{t.submittedAt ? dayjs(t.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
                   <TableCell>{t.decidedAt ? dayjs(t.decidedAt).format('D MMM, HH:mm') : '—'}</TableCell>
                 </TableRow>
@@ -76,7 +77,7 @@ export default function TeamTimesheetsTable({ items, isLoading }: TeamTimesheets
                               <TableCell>Date</TableCell>
                               <TableCell>Project</TableCell>
                               <TableCell>Description</TableCell>
-                              <TableCell align="right">Hours</TableCell>
+                              <TableCell align="right">Time</TableCell>
                               <TableCell>Billable</TableCell>
                             </TableRow>
                           </TableHead>
@@ -88,7 +89,7 @@ export default function TeamTimesheetsTable({ items, isLoading }: TeamTimesheets
                                   {e.project ? `${e.project.code} — ${e.project.name}` : '—'}
                                 </TableCell>
                                 <TableCell>{e.description}</TableCell>
-                                <TableCell align="right">{e.hours} h</TableCell>
+                                <TableCell align="right">{formatHours(e.hours)}</TableCell>
                                 <TableCell>{e.isBillable ? 'Yes' : 'No'}</TableCell>
                               </TableRow>
                             ))}
