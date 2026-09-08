@@ -11,6 +11,8 @@ interface ApprovalsTableProps {
   approvePending: boolean;
   onRevert: (id: string) => void;
   revertPending: boolean;
+  /** Undoing an approval is admin-only; managers keep revert on submitted weeks. */
+  isAdmin: boolean;
 }
 
 export default function ApprovalsTable({
@@ -21,6 +23,7 @@ export default function ApprovalsTable({
   approvePending,
   onRevert,
   revertPending,
+  isAdmin,
 }: ApprovalsTableProps) {
   return (
     <Paper variant="outlined">
@@ -54,9 +57,11 @@ export default function ApprovalsTable({
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <Button size="small" disabled={revertPending} onClick={() => onRevert(t.id)}>
-                      Revert to draft
-                    </Button>
+                    {(isAdmin || t.status === 'SUBMITTED') && (
+                      <Button size="small" disabled={revertPending} onClick={() => onRevert(t.id)}>
+                        Revert to draft
+                      </Button>
+                    )}
                     <Button size="small" color="error" onClick={() => onReject(t)}>
                       Reject
                     </Button>

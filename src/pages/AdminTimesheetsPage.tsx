@@ -10,6 +10,7 @@ import WeekNavigationAdmin from '../components/admin/WeekNavigationAdmin';
 import WeekDaysView from '../components/admin/WeekDaysView';
 import DayDetailsPanel from '../components/admin/DayDetailsPanel';
 import EntryCorrections from '../components/admin/EntryCorrections';
+import WeekRevert from '../components/admin/WeekRevert';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
 
 function getMonday(date: Dayjs): Dayjs {
@@ -29,6 +30,7 @@ export default function AdminTimesheetsPage() {
   const canEdit = me?.role === 'ADMIN';
   const [editing, setEditing] = useState<TimesheetEntry | null>(null);
   const [deleting, setDeleting] = useState<TimesheetEntry | null>(null);
+  const [reverting, setReverting] = useState<TeamTimesheet | null>(null);
 
   // Managers get their direct reports; admins get everyone.
   const employees = useQuery<AdminUser[]>({
@@ -106,6 +108,8 @@ export default function AdminTimesheetsPage() {
                   weeks={weeks.data ?? []}
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
+                  canRevert={canEdit}
+                  onRevert={setReverting}
                 />
 
                 <DayDetailsPanel
@@ -137,6 +141,15 @@ export default function AdminTimesheetsPage() {
         onChanged={() =>
           qc.invalidateQueries({ queryKey: ['employee-timesheets', selectedEmployeeId] })
         }
+      />
+
+      <WeekRevert
+        week={reverting}
+        onClose={() => setReverting(null)}
+        onReverted={() => {
+          qc.invalidateQueries({ queryKey: ['employee-timesheets', selectedEmployeeId] });
+          qc.invalidateQueries({ queryKey: ['pending'] });
+        }}
       />
     </Stack>
   );

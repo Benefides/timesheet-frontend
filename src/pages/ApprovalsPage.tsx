@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Alert, Box, Stack, Typography } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
+import { useMe } from '../lib/hooks';
 import type { PendingItem } from '../lib/types';
 import ApprovalsTable from '../components/approvals/ApprovalsTable';
 import RejectDialog from '../components/approvals/RejectDialog';
 
 export default function ApprovalsPage() {
   const qc = useQueryClient();
+  const { data: me } = useMe();
   const [reject, setReject] = useState<PendingItem | null>(null);
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export default function ApprovalsPage() {
         approvePending={approve.isPending}
         onRevert={(id) => revert.mutate(id)}
         revertPending={revert.isPending}
+        isAdmin={me?.role === 'ADMIN'}
       />
 
       <RejectDialog

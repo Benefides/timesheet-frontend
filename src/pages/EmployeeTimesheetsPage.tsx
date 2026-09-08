@@ -9,6 +9,7 @@ import type { AdminUser, TeamTimesheet, TimesheetEntry } from '../lib/types';
 import EmployeeHeader from '../components/admin/EmployeeHeader';
 import EmployeeWeeksTable from '../components/admin/EmployeeWeeksTable';
 import EntryCorrections from '../components/admin/EntryCorrections';
+import WeekRevert from '../components/admin/WeekRevert';
 
 export default function EmployeeTimesheetsPage() {
   const { employeeId } = useParams<{ employeeId: string }>();
@@ -23,6 +24,7 @@ export default function EmployeeTimesheetsPage() {
   // The editor restricts an entry to its own week, so it needs the week the
   // clicked row belongs to.
   const [entryWeekStart, setEntryWeekStart] = useState<Dayjs | null>(null);
+  const [reverting, setReverting] = useState<TeamTimesheet | null>(null);
 
   const employees = useQuery<AdminUser[]>({
     queryKey: ['admin-users'],
@@ -64,6 +66,7 @@ export default function EmployeeTimesheetsPage() {
           setEntryWeekStart(dayjs(week.weekStart));
           setDeleting(entry);
         }}
+        onRevertWeek={setReverting}
       />
 
       <EntryCorrections
@@ -78,6 +81,15 @@ export default function EmployeeTimesheetsPage() {
         onChanged={() =>
           qc.invalidateQueries({ queryKey: ['employee-timesheets', employeeId] })
         }
+      />
+
+      <WeekRevert
+        week={reverting}
+        onClose={() => setReverting(null)}
+        onReverted={() => {
+          qc.invalidateQueries({ queryKey: ['employee-timesheets', employeeId] });
+          qc.invalidateQueries({ queryKey: ['pending'] });
+        }}
       />
     </Stack>
   );

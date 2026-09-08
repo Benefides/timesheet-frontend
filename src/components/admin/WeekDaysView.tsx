@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import type { TeamTimesheet, TimesheetStatus } from '../../lib/types';
 import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
+import { REVERTIBLE } from './WeekRevert';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -17,6 +18,9 @@ interface WeekDaysViewProps {
   weeks: TeamTimesheet[];
   selectedDate: Dayjs | null;
   onSelectDate: (date: Dayjs) => void;
+  /** Undoing an approval is admin-only, so the button is too. */
+  canRevert?: boolean;
+  onRevert?: (week: TeamTimesheet) => void;
 }
 
 export default function WeekDaysView({
@@ -24,6 +28,8 @@ export default function WeekDaysView({
   weeks,
   selectedDate,
   onSelectDate,
+  canRevert = false,
+  onRevert,
 }: WeekDaysViewProps) {
   // Create a map of dates to weeks for quick lookup
   const weekMap = new Map<string, TeamTimesheet>();
@@ -80,9 +86,16 @@ export default function WeekDaysView({
             </Typography>
             <Chip size="small" label={weekOfTheWeek.status.toLowerCase()} color={STATUS_COLOR[weekOfTheWeek.status]} />
           </Stack>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {formatHours(weekOfTheWeek.totalHours)} · {formatHours(weekOfTheWeek.billableHours)} billable
-          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {formatHours(weekOfTheWeek.totalHours)} · {formatHours(weekOfTheWeek.billableHours)} billable
+            </Typography>
+            {canRevert && REVERTIBLE.includes(weekOfTheWeek.status) && (
+              <Button size="small" color="warning" onClick={() => onRevert?.(weekOfTheWeek)}>
+                Revert to draft
+              </Button>
+            )}
+          </Stack>
         </Box>
       )}
     </Stack>
