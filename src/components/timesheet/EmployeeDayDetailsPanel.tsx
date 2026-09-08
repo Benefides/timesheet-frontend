@@ -5,9 +5,10 @@ import {
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import type { Project, Timesheet } from '../../lib/types';
+import type { Coworker, Project, Timesheet } from '../../lib/types';
 import { formatMinutes, sumMinutes, formatHours } from '../../lib/duration';
 import ProjectPicker from './ProjectPicker';
+import CoworkerPicker from './CoworkerPicker';
 
 interface FormData {
   projectId: string;
@@ -16,12 +17,17 @@ interface FormData {
   minutes: string;
   description: string;
   isBillable: boolean;
+  /** Colleagues who worked the same block of time. */
+  coworkerIds: string[];
 }
 
 interface EmployeeDayDetailsPanelProps {
   selectedDate: Dayjs | null;
   timesheet: Timesheet | undefined;
   projects: Project[];
+  /** Colleagues on the chosen project that day. */
+  coworkers: Coworker[];
+  coworkersLoading: boolean;
   form: FormData;
   onFormChange: (form: FormData) => void;
   canAdd: boolean;
@@ -35,6 +41,8 @@ export default function EmployeeDayDetailsPanel({
   selectedDate,
   timesheet,
   projects,
+  coworkers,
+  coworkersLoading,
   form,
   onFormChange,
   canAdd,
@@ -100,7 +108,14 @@ export default function EmployeeDayDetailsPanel({
               {dayEntries.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell>{e.project?.code ?? '—'}</TableCell>
-                  <TableCell>{e.description}</TableCell>
+                  <TableCell>
+                    {e.description}
+                    {e.createdBy && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Added by {e.createdBy.displayName}
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell align="right">{formatHours(e.hours)}</TableCell>
                   <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                   <TableCell align="right">
@@ -140,7 +155,14 @@ export default function EmployeeDayDetailsPanel({
                 value={form.projectId}
                 size="small"
                 onChange={(p) =>
-                  onFormChange({ ...form, projectId: p?.id ?? '', isBillable: p?.isBillable ?? true })
+                  onFormChange({
+                    ...form,
+                    projectId: p?.id ?? '',
+                    isBillable: p?.isBillable ?? true,
+                    // The colleague list is per project — a stale pick would
+                    // name someone who is not on the new project.
+                    coworkerIds: [],
+                  })
                 }
               />
               <Stack direction="row" spacing={2}>
@@ -168,6 +190,14 @@ export default function EmployeeDayDetailsPanel({
                 size="small"
                 value={form.description}
                 onChange={(e) => onFormChange({ ...form, description: e.target.value })}
+              />
+              <CoworkerPicker
+                coworkers={coworkers}
+                value={form.coworkerIds}
+                size="small"
+                disabled={!form.projectId}
+                isLoading={coworkersLoading}
+                onChange={(ids) => onFormChange({ ...form, coworkerIds: ids })}
               />
               <Button
                 variant="contained"

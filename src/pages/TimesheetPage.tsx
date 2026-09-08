@@ -6,7 +6,7 @@ import { api, apiErrorMessage } from '../lib/api';
 import { toDecimalHours } from '../lib/duration';
 import { useMyProjects } from '../lib/hooks';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
-import type { Timesheet } from '../lib/types';
+import type { Coworker, Timesheet } from '../lib/types';
 import EmployeeWeekNavigation from '../components/timesheet/EmployeeWeekNavigation';
 import EmployeeWeekDaysView from '../components/timesheet/EmployeeWeekDaysView';
 import EmployeeDayDetailsPanel from '../components/timesheet/EmployeeDayDetailsPanel';
@@ -47,11 +47,22 @@ export default function TimesheetPage() {
     minutes: '',
     description: '',
     isBillable: true,
+    coworkerIds: [] as string[],
   });
   const [error, setError] = useState<string | null>(null);
 
   // Hours and minutes are entered separately and sent as decimal hours.
   const duration = toDecimalHours(form.hours, form.minutes);
+
+  // Who else was on this project that day. Assignments are effective-dated, so
+  // the list depends on the day as well as the project.
+  const coworkers = useQuery<Coworker[]>({
+    queryKey: ['coworkers', form.projectId, form.workDate],
+    queryFn: async () =>
+      (await api.get(`/projects/${form.projectId}/coworkers`, { params: { date: form.workDate } }))
+        .data,
+    enabled: Boolean(form.projectId && form.workDate),
+  });
 
   const addEntry = useMutation({
     mutationFn: async () =>
@@ -61,9 +72,17 @@ export default function TimesheetPage() {
         hours: duration,
         isBillable: form.isBillable,
         description: form.description,
+        coworkerIds: form.coworkerIds,
       })).data,
     onSuccess: () => {
-      setForm((f) => ({ ...f, hours: '', minutes: '', description: '', projectId: '' }));
+      setForm((f) => ({
+        ...f,
+        hours: '',
+        minutes: '',
+        description: '',
+        projectId: '',
+        coworkerIds: [],
+      }));
       setError(null);
       qc.invalidateQueries({ queryKey: ['timesheet', weekStartStr] });
     },
@@ -117,7 +136,7 @@ export default function TimesheetPage() {
         setSelectedDate(null);
         // Keep the entry form's date inside the week being viewed — a stale
         // date would file the entry into a different week than the one shown.
-        setForm((f) => ({ ...f, workDate: w.format('YYYY-MM-DD') }));
+        setForm((f) => ({ ...f, workDate: w.format('YYYY-MM-DD'), coworkerIds: [] }));
       }} />
 
       <EmployeeWeekDaysView
@@ -128,7 +147,8 @@ export default function TimesheetPage() {
           setSelectedDate(day);
           // The day panel's Add button posts form.workDate; it must always be
           // the day on screen, not whatever the form was initialised with.
-          setForm((f) => ({ ...f, workDate: day.format('YYYY-MM-DD') }));
+          // Assignments are effective-dated, so the colleague list resets too.
+          setForm((f) => ({ ...f, workDate: day.format('YYYY-MM-DD'), coworkerIds: [] }));
         }}
         editable={editable}
       />
@@ -139,6 +159,8 @@ export default function TimesheetPage() {
             selectedDate={selectedDate}
             timesheet={ts}
             projects={projects}
+            coworkers={coworkers.data ?? []}
+            coworkersLoading={coworkers.isLoading}
             form={form}
             onFormChange={setForm}
             canAdd={canAdd}

@@ -28,6 +28,15 @@ export interface TimesheetEntry {
   isBillable: boolean;
   description: string;
   project?: { code: string; name: string };
+  /** Set when a colleague logged this shared entry on the owner's behalf. */
+  createdBy?: { id: string; displayName: string } | null;
+}
+
+/** A colleague on the same project, offered by the "also log for" picker. */
+export interface Coworker {
+  id: string;
+  displayName: string;
+  employeeCode?: string | null;
 }
 
 export interface Timesheet {

@@ -90,7 +90,14 @@ export default function DayDetailsPanel({
                 return (
                   <TableRow key={e.id}>
                     <TableCell>{e.project?.code ?? '—'}</TableCell>
-                    <TableCell>{e.description}</TableCell>
+                    <TableCell>
+                      {e.description}
+                      {e.createdBy && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Added by {e.createdBy.displayName}
+                        </Typography>
+                      )}
+                    </TableCell>
                     <TableCell align="right">{formatHours(e.hours)}</TableCell>
                     <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                     {canEdit && (
