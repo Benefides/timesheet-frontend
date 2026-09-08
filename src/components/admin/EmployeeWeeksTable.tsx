@@ -1,11 +1,14 @@
 import { Fragment, useState } from 'react';
 import {
-  Box, Chip, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
+  Box, Chip, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow,
+  Tooltip, Typography,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import dayjs from 'dayjs';
-import type { TeamTimesheet, TimesheetStatus } from '../../lib/types';
+import type { TeamTimesheet, TimesheetEntry, TimesheetStatus } from '../../lib/types';
 import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
@@ -19,9 +22,19 @@ const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | '
 interface EmployeeWeeksTableProps {
   weeks: TeamTimesheet[];
   isLoading: boolean;
+  /** Admins only — every other role sees this table read-only. */
+  canEdit?: boolean;
+  onEditEntry?: (entry: TimesheetEntry, week: TeamTimesheet) => void;
+  onDeleteEntry?: (entry: TimesheetEntry, week: TeamTimesheet) => void;
 }
 
-export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTableProps) {
+export default function EmployeeWeeksTable({
+  weeks,
+  isLoading,
+  canEdit = false,
+  onEditEntry,
+  onDeleteEntry,
+}: EmployeeWeeksTableProps) {
   const [open, setOpen] = useState<string | null>(null);
 
   return (
@@ -98,6 +111,7 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                                       <TableCell>Description</TableCell>
                                       <TableCell align="right">Time</TableCell>
                                       <TableCell>Type</TableCell>
+                                      {canEdit && <TableCell align="right">Edit</TableCell>}
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
@@ -107,6 +121,36 @@ export default function EmployeeWeeksTable({ weeks, isLoading }: EmployeeWeeksTa
                                         <TableCell>{e.description}</TableCell>
                                         <TableCell align="right">{formatHours(e.hours)}</TableCell>
                                         <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
+                                        {canEdit && (
+                                          <TableCell align="right">
+                                            <Tooltip
+                                              title={
+                                                w.status === 'APPROVED'
+                                                  ? 'Revert the approved week before editing it'
+                                                  : ''
+                                              }
+                                            >
+                                              <span>
+                                                <IconButton
+                                                  size="small"
+                                                  disabled={w.status === 'APPROVED'}
+                                                  aria-label="Edit entry"
+                                                  onClick={() => onEditEntry?.(e, w)}
+                                                >
+                                                  <EditOutlinedIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton
+                                                  size="small"
+                                                  disabled={w.status === 'APPROVED'}
+                                                  aria-label="Delete entry"
+                                                  onClick={() => onDeleteEntry?.(e, w)}
+                                                >
+                                                  <DeleteOutlineIcon fontSize="small" />
+                                                </IconButton>
+                                              </span>
+                                            </Tooltip>
+                                          </TableCell>
+                                        )}
                                       </TableRow>
                                     ))}
                                   </TableBody>

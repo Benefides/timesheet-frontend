@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Box, Grid, Stack, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '../lib/api';
-import type { AdminUser, TeamTimesheet } from '../lib/types';
+import { useMe } from '../lib/hooks';
+import type { AdminUser, TeamTimesheet, TimesheetEntry } from '../lib/types';
 import EmployeesList from '../components/admin/EmployeesList';
 import WeekNavigationAdmin from '../components/admin/WeekNavigationAdmin';
 import WeekDaysView from '../components/admin/WeekDaysView';
 import DayDetailsPanel from '../components/admin/DayDetailsPanel';
+import EntryCorrections from '../components/admin/EntryCorrections';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
 
 function getMonday(date: Dayjs): Dayjs {
@@ -16,9 +18,17 @@ function getMonday(date: Dayjs): Dayjs {
 }
 
 export default function AdminTimesheetsPage() {
+  const qc = useQueryClient();
+  const { data: me } = useMe();
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState(getMonday(dayjs()));
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+
+  // Correcting someone else's record is an administrative act. Managers keep
+  // the read-only view they have today.
+  const canEdit = me?.role === 'ADMIN';
+  const [editing, setEditing] = useState<TimesheetEntry | null>(null);
+  const [deleting, setDeleting] = useState<TimesheetEntry | null>(null);
 
   // Managers get their direct reports; admins get everyone.
   const employees = useQuery<AdminUser[]>({
@@ -98,7 +108,13 @@ export default function AdminTimesheetsPage() {
                   onSelectDate={setSelectedDate}
                 />
 
-                <DayDetailsPanel selectedDate={selectedDate} weeks={weeks.data ?? []} />
+                <DayDetailsPanel
+                  selectedDate={selectedDate}
+                  weeks={weeks.data ?? []}
+                  canEdit={canEdit}
+                  onEditEntry={setEditing}
+                  onDeleteEntry={setDeleting}
+                />
 
             {weeks.data && weeks.data.length > 0 && (
               <WeeklyHoursChart weeks={weeks.data} title="Employee Weekly Hours" />
@@ -108,6 +124,20 @@ export default function AdminTimesheetsPage() {
           </Stack>
         </Grid>
       </Grid>
+
+      <EntryCorrections
+        editing={editing}
+        deleting={deleting}
+        weekStart={weekStart}
+        employeeId={selectedEmployeeId}
+        onClose={() => {
+          setEditing(null);
+          setDeleting(null);
+        }}
+        onChanged={() =>
+          qc.invalidateQueries({ queryKey: ['employee-timesheets', selectedEmployeeId] })
+        }
+      />
     </Stack>
   );
 }
