@@ -70,7 +70,8 @@ export default function ReportsPage() {
       <Box>
         <Typography variant="h5">Time range report</Typography>
         <Typography color="text.secondary">
-          Hours logged between two dates, by employee and project. Download it as an Excel workbook.
+          Hours logged between two dates. The Excel download has a day-wise tab for each person and a
+          final consolidated tab.
         </Typography>
       </Box>
 
@@ -141,7 +142,7 @@ export default function ReportsPage() {
               </TableHead>
               <TableBody>
                 {report.byEmployee.map((e) => (
-                  <TableRow key={`${e.employee}-${e.employeeCode}`}>
+                  <TableRow key={e.userId}>
                     <TableCell>{e.employee}</TableCell>
                     <TableCell>{e.employeeCode || '—'}</TableCell>
                     <TableCell align="right">{formatMinutes(e.minutes)}</TableCell>
