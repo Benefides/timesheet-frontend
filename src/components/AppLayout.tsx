@@ -8,6 +8,7 @@ const NAV: { to: string; label: string; roles: Me['role'][] }[] = [
   { to: '/timesheet', label: 'My timesheet', roles: ['EMPLOYEE', 'MANAGER', 'ADMIN'] },
   { to: '/approvals', label: 'Approvals', roles: ['MANAGER', 'ADMIN'] },
   { to: '/admin/timesheets', label: 'View timesheets', roles: ['MANAGER', 'ADMIN'] },
+  { to: '/reports', label: 'Reports', roles: ['MANAGER', 'ADMIN'] },
   { to: '/admin/users', label: 'People', roles: ['ADMIN'] },
   { to: '/admin/projects', label: 'Projects', roles: ['MANAGER', 'ADMIN'] },
   { to: '/admin/org', label: 'Organisation', roles: ['EMPLOYEE', 'MANAGER', 'ADMIN'] },
