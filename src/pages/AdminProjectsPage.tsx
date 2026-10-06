@@ -31,7 +31,9 @@ export default function AdminProjectsPage() {
     queryKey: ['org-users'],
     queryFn: async () => (await api.get('/users/team')).data,
   });
-  const activeUsers = (users.data ?? []).filter((u) => u.status === 'ACTIVE');
+  // People still in setup are enrolled too: projects are part of that setup,
+  // so they can record time the moment they are activated.
+  const enrollableUsers = (users.data ?? []).filter((u) => u.status !== 'DISABLED');
 
   // ---- Create / edit ----
   const emptyDraft = { code: '', name: '', isBillable: true };
@@ -177,7 +179,7 @@ export default function AdminProjectsPage() {
       {managing && (
         <EnrollmentDialog
           project={managing}
-          activeUsers={activeUsers}
+          enrollableUsers={enrollableUsers}
           onClose={() => setManaging(null)}
           onError={setError}
         />
@@ -254,15 +256,16 @@ function EditProjectDialog({
 }
 
 function EnrollmentDialog({
-  project, activeUsers, onClose, onError,
+  project, enrollableUsers, onClose, onError,
 }: {
   project: AdminProject;
-  activeUsers: AdminUser[];
+  enrollableUsers: AdminUser[];
   onClose: () => void;
   onError: (msg: string) => void;
 }) {
   const qc = useQueryClient();
   const [userId, setUserId] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
 
   const assignments = useQuery<AdminAssignment[]>({
     queryKey: ['assignments', project.id],
@@ -271,11 +274,12 @@ function EnrollmentDialog({
 
   const current = (assignments.data ?? []).filter(isCurrent);
   const enrolledIds = new Set(current.map((a) => a.userId));
-  const candidates = activeUsers.filter((u) => !enrolledIds.has(u.id));
+  const candidates = enrollableUsers.filter((u) => !enrolledIds.has(u.id));
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['assignments', project.id] });
     qc.invalidateQueries({ queryKey: ['my-projects'] }); // own timesheet dropdown
+    qc.invalidateQueries({ queryKey: ['assigned-projects'] }); // admin entry editor
   };
 
   // Enrollments start at Jan 1 so earlier weeks of the current year stay bookable.
@@ -288,14 +292,22 @@ function EnrollmentDialog({
     onError: (e) => onError(apiErrorMessage(e)),
   });
 
+  // One request, applied all-or-nothing by the server, so nobody is silently
+  // left off when a single enrollment fails.
   const enrollAll = useMutation({
-    mutationFn: async () => {
-      for (const u of candidates) {
-        // eslint-disable-next-line no-await-in-loop
-        await api.post(`/projects/${project.id}/assignments`, { userId: u.id, effectiveFrom: from });
-      }
+    mutationFn: async () =>
+      (await api.post<{ added: number; reopened: number; alreadyAssigned: number }>(
+        `/projects/${project.id}/assignments/bulk`,
+        { userIds: candidates.map((u) => u.id), effectiveFrom: from },
+      )).data,
+    onSuccess: (r) => {
+      const enrolled = r.added + r.reopened;
+      setNotice(
+        `${enrolled} ${enrolled === 1 ? 'person' : 'people'} added to ${project.code}` +
+          (r.alreadyAssigned ? ` (${r.alreadyAssigned} already on it)` : '') + '.',
+      );
+      refresh();
     },
-    onSuccess: refresh,
     onError: (e) => { onError(apiErrorMessage(e)); refresh(); },
   });
 
@@ -311,6 +323,7 @@ function EnrollmentDialog({
       <DialogTitle>People on {project.code}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {notice && <Alert severity="success" onClose={() => setNotice(null)}>{notice}</Alert>}
           <Stack direction="row" spacing={1}>
             <TextField
               select fullWidth size="small" label="Add person" value={userId}
@@ -318,7 +331,9 @@ function EnrollmentDialog({
             >
               {candidates.length === 0 && <MenuItem value="" disabled>Everyone is enrolled</MenuItem>}
               {candidates.map((u) => (
-                <MenuItem key={u.id} value={u.id}>{u.displayName}</MenuItem>
+                <MenuItem key={u.id} value={u.id}>
+                  {u.displayName}{u.status === 'PENDING_SETUP' ? ' (in setup)' : ''}
+                </MenuItem>
               ))}
             </TextField>
             <Button

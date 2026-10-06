@@ -55,7 +55,9 @@ export interface PendingItem {
   totalHours: string;
   billableHours: string;
   submittedAt: string | null;
-  user: { displayName: string; employeeCode: string | null };
+  user: { id: string; displayName: string; employeeCode: string | null };
+  /** The week's tasks, for reviewing day by day before deciding. */
+  entries?: TimesheetEntry[];
 }
 
 export interface TeamTimesheet {

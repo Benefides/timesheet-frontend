@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Box, Grid, Stack, Typography } from '@mui/material';
+import { Box, Button, Grid, Stack, Typography } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '../lib/api';
@@ -21,8 +23,17 @@ function getMonday(date: Dayjs): Dayjs {
 export default function AdminTimesheetsPage() {
   const qc = useQueryClient();
   const { data: me } = useMe();
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [weekStart, setWeekStart] = useState(getMonday(dayjs()));
+  // Links from elsewhere (e.g. the approvals queue) open on a given person and
+  // week: ?employee=<userId>&week=YYYY-MM-DD.
+  const [searchParams] = useSearchParams();
+  const linkedWeek = searchParams.get('week');
+  const fromApprovals = searchParams.get('from') === 'approvals';
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
+    searchParams.get('employee'),
+  );
+  const [weekStart, setWeekStart] = useState(() =>
+    getMonday(linkedWeek && dayjs(linkedWeek).isValid() ? dayjs(linkedWeek) : dayjs()),
+  );
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   // Correcting someone else's record is an administrative act. Managers keep
@@ -70,7 +81,14 @@ export default function AdminTimesheetsPage() {
           borderColor: 'divider',
         }}
       >
-        <Typography variant="h5">Timesheets</Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+          {fromApprovals && (
+            <Button size="small" startIcon={<ArrowBackIcon />} component={RouterLink} to="/approvals">
+              Back to approvals
+            </Button>
+          )}
+          <Typography variant="h5">Timesheets</Typography>
+        </Stack>
         {selectedEmployee && (
           <Stack alignItems="flex-end">
             <Typography variant="subtitle1">{selectedEmployee.displayName}</Typography>
