@@ -39,15 +39,18 @@ export default function AdminProjectsPage() {
   const emptyDraft = { code: '', name: '', isBillable: true };
   const [draft, setDraft] = useState(emptyDraft);
   const [creating, setCreating] = useState(false);
+  // Shown inside the dialog: a page-level alert would sit hidden behind it.
+  const [createError, setCreateError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminProject | null>(null);
 
   const create = useMutation({
-    mutationFn: async () => api.post('/projects', draft),
+    mutationFn: async () =>
+      api.post('/projects', { ...draft, code: draft.code.trim(), name: draft.name.trim() }),
     onSuccess: () => {
       setCreating(false);
       qc.invalidateQueries({ queryKey: ['admin-projects'] });
     },
-    onError: (e) => setError(apiErrorMessage(e)),
+    onError: (e) => setCreateError(apiErrorMessage(e)),
   });
 
   const update = useMutation({
@@ -82,7 +85,7 @@ export default function AdminProjectsPage() {
             Time can only be recorded against a project someone is enrolled in.
           </Typography>
         </Box>
-        <Button variant="contained" onClick={() => { setDraft(emptyDraft); setCreating(true); }}>
+        <Button variant="contained" onClick={() => { setDraft(emptyDraft); setCreateError(null); setCreating(true); }}>
           New project
         </Button>
       </Stack>
@@ -131,6 +134,7 @@ export default function AdminProjectsPage() {
         <DialogTitle>New project</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            {createError && <Alert severity="error" onClose={() => setCreateError(null)}>{createError}</Alert>}
             <TextField
               label="Code" value={draft.code} placeholder="e.g. ACME"
               helperText="Short unique identifier shown in the timesheet grid"
