@@ -41,6 +41,12 @@ export default function TimesheetPage() {
   });
 
   const editable = ts ? EDITABLE.includes(ts.status) : true;
+
+  // Any change to the week also changes the history chart below it.
+  const refreshWeek = () => {
+    qc.invalidateQueries({ queryKey: ['timesheet', weekStartStr] });
+    qc.invalidateQueries({ queryKey: ['my-timesheets-all'] });
+  };
   const [form, setForm] = useState({
     projectId: '',
     workDate: weekStartStr,
@@ -86,21 +92,21 @@ export default function TimesheetPage() {
         coworkerIds: [],
       }));
       setError(null);
-      qc.invalidateQueries({ queryKey: ['timesheet', weekStartStr] });
+      refreshWeek();
     },
     onError: (e) => setError(apiErrorMessage(e)),
   });
 
   const removeEntry = useMutation({
     mutationFn: async (id: string) => api.delete(`/timesheets/entries/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['timesheet', weekStartStr] }),
+    onSuccess: () => refreshWeek(),
   });
 
   const submit = useMutation({
     mutationFn: async () => api.post(`/timesheets/weeks/${weekStartStr}/submit`),
     onSuccess: () => {
       setError(null);
-      qc.invalidateQueries({ queryKey: ['timesheet', weekStartStr] });
+      refreshWeek();
     },
     onError: (e) => setError(apiErrorMessage(e)),
   });
@@ -191,7 +197,7 @@ export default function TimesheetPage() {
 
       {/* Weekly chart */}
       {allTimesheets.data && allTimesheets.data.length > 0 && (
-        <WeeklyHoursChart weeks={allTimesheets.data} title="Your Weekly Hours" />
+        <WeeklyHoursChart weeks={allTimesheets.data} title="Your Weekly Hours" endWeek={weekStart} />
       )}
     </Stack>
   );

@@ -150,7 +150,7 @@ export default function AdminTimesheetsPage() {
                 />
 
             {weeks.data && weeks.data.length > 0 && (
-              <WeeklyHoursChart weeks={weeks.data} title="Employee Weekly Hours" />
+              <WeeklyHoursChart weeks={weeks.data} title="Employee Weekly Hours" endWeek={weekStart} />
             )}
               </>
             )}
