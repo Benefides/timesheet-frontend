@@ -14,6 +14,8 @@ import DayDetailsPanel from '../components/admin/DayDetailsPanel';
 import EntryCorrections from '../components/admin/EntryCorrections';
 import WeekRevert from '../components/admin/WeekRevert';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
+import WeeklyTargetCard from '../components/timesheet/WeeklyTargetCard';
+import { sumMinutes } from '../lib/duration';
 
 function getMonday(date: Dayjs): Dayjs {
   const day = date.day();
@@ -121,6 +123,15 @@ export default function AdminTimesheetsPage() {
           <Stack spacing={3}>
             {selectedEmployeeId && (
               <>
+                {/* The selected person's week against the weekly target. */}
+                <WeeklyTargetCard
+                  loggedMinutes={sumMinutes(
+                    weeks.data?.find(
+                      (w) => dayjs(w.weekStart).format('YYYY-MM-DD') === weekStart.format('YYYY-MM-DD'),
+                    )?.entries ?? [],
+                  )}
+                />
+
                 <WeekDaysView
                   weekStart={weekStart}
                   weeks={weeks.data ?? []}

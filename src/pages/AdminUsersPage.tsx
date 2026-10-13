@@ -53,6 +53,29 @@ export default function AdminUsersPage() {
   const [roleTarget, setRoleTarget] = useState<AdminUser | null>(null);
   const [newRole, setNewRole] = useState<Role>('EMPLOYEE');
   const [deactTarget, setDeactTarget] = useState<AdminUser | null>(null);
+  const [codeTarget, setCodeTarget] = useState<AdminUser | null>(null);
+  const [newCode, setNewCode] = useState('');
+  // Shown inside the dialog: a page-level alert would sit hidden behind it.
+  const [codeError, setCodeError] = useState<string | null>(null);
+
+  const openCodeEdit = (u: AdminUser) => {
+    setNewCode(u.employeeCode ?? '');
+    setCodeError(null);
+    setCodeTarget(u);
+  };
+
+  const changeCode = useMutation({
+    mutationFn: async () =>
+      api.patch(`/users/${codeTarget!.id}/employee-code`, { employeeCode: newCode.trim() }),
+    onSuccess: () => {
+      setCodeTarget(null);
+      // The code shows up in rosters, reports and the org chart too.
+      for (const key of ['admin-users', 'team-roster', 'org-users', 'range-report', 'pending']) {
+        qc.invalidateQueries({ queryKey: [key] });
+      }
+    },
+    onError: (e) => setCodeError(apiErrorMessage(e)),
+  });
 
   const changeRole = useMutation({
     mutationFn: async () => api.patch(`/users/${roleTarget!.id}/role`, { role: newRole }),
@@ -82,6 +105,7 @@ export default function AdminUsersPage() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
+              <TableCell>Code</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Status</TableCell>
@@ -101,6 +125,7 @@ export default function AdminUsersPage() {
                     {u.displayName}
                   </Button>
                 </TableCell>
+                <TableCell sx={{ fontFamily: 'monospace' }}>{u.employeeCode || '—'}</TableCell>
                 <TableCell>{u.email}</TableCell>
                 <TableCell>{u.role.toLowerCase()}</TableCell>
                 <TableCell><Chip size="small" label={u.status} color={STATUS_COLOR[u.status]} /></TableCell>
@@ -108,6 +133,11 @@ export default function AdminUsersPage() {
                   {u.status === 'PENDING_SETUP' && (
                     <Button size="small" variant="contained" onClick={() => openSetup(u)}>
                       Complete setup
+                    </Button>
+                  )}
+                  {u.status === 'ACTIVE' && (
+                    <Button size="small" onClick={() => openCodeEdit(u)}>
+                      Edit code
                     </Button>
                   )}
                   {u.status === 'ACTIVE' && u.id !== me.data?.id && (
@@ -127,7 +157,7 @@ export default function AdminUsersPage() {
               </TableRow>
             ))}
             {users.isLoading && (
-              <TableRow><TableCell colSpan={5}>Loading…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6}>Loading…</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -200,6 +230,37 @@ export default function AdminUsersPage() {
             variant="contained"
             disabled={changeRole.isPending || newRole === roleTarget?.role}
             onClick={() => changeRole.mutate()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ---- Employee code ---- */}
+      <Dialog open={Boolean(codeTarget)} onClose={() => setCodeTarget(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Employee code — {codeTarget?.displayName}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {codeError && <Alert severity="error" onClose={() => setCodeError(null)}>{codeError}</Alert>}
+            <TextField
+              fullWidth autoFocus label="Employee code" value={newCode}
+              inputProps={{ maxLength: 40 }}
+              helperText="Must be unique. Reports and exports show the new code from now on."
+              onChange={(e) => setNewCode(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newCode.trim() && newCode.trim() !== codeTarget?.employeeCode) {
+                  changeCode.mutate();
+                }
+              }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCodeTarget(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={changeCode.isPending || !newCode.trim() || newCode.trim() === codeTarget?.employeeCode}
+            onClick={() => changeCode.mutate()}
           >
             Save
           </Button>

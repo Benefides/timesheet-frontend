@@ -12,7 +12,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useQuery } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api, apiErrorMessage } from '../lib/api';
-import { formatMinutes } from '../lib/duration';
+import { formatMinutes, toMinutes } from '../lib/duration';
+import { rangeTargetMinutes, weekdaysBetween } from '../lib/weeklyTarget';
+import TargetPercentChip from '../components/common/TargetPercentChip';
 import { buildRangeReport, downloadRangeReportXlsx } from '../lib/rangeReport';
 import type { AdminUser, TeamTimesheet, TimesheetStatus } from '../lib/types';
 import StatusFilter from '../components/team/StatusFilter';
@@ -65,6 +67,21 @@ export default function ReportsPage() {
     const filtered = status === 'ALL' ? weeks.data : weeks.data.filter((w) => w.status === status);
     return buildRangeReport(filtered, fromIso!, toIso!);
   }, [canQuery, weeks.data, status, fromIso, toIso]);
+
+  // Whole-week totals per person (Mon–Sun, including days outside the range),
+  // so each week in the details is measured against the full weekly target.
+  const weekTotals = useMemo(() => {
+    const byUser = new Map<string, Map<string, number>>();
+    for (const w of weeks.data ?? []) {
+      if (status !== 'ALL' && w.status !== status) continue;
+      const m = byUser.get(w.user.id) ?? new Map<string, number>();
+      m.set(w.weekStart.slice(0, 10), (m.get(w.weekStart.slice(0, 10)) ?? 0) + toMinutes(w.totalHours));
+      byUser.set(w.user.id, m);
+    }
+    return byUser;
+  }, [weeks.data, status]);
+
+  const rangeTarget = report ? rangeTargetMinutes(report.from, report.to) : 0;
 
   const onExport = async () => {
     if (!report) return;
@@ -172,6 +189,13 @@ export default function ReportsPage() {
                   <TableCell align="right">Total</TableCell>
                   <TableCell align="right">Billable</TableCell>
                   <TableCell align="right">Non-billable</TableCell>
+                  <TableCell align="right">
+                    <Tooltip
+                      title={`${weekdaysBetween(report.from, report.to)} working days × ${formatMinutes(rangeTarget / Math.max(weekdaysBetween(report.from, report.to), 1))} a day`}
+                    >
+                      <span>Of {formatMinutes(rangeTarget)}</span>
+                    </Tooltip>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -194,11 +218,19 @@ export default function ReportsPage() {
                         <TableCell align="right">{formatMinutes(e.minutes)}</TableCell>
                         <TableCell align="right">{formatMinutes(e.billableMinutes)}</TableCell>
                         <TableCell align="right">{formatMinutes(e.minutes - e.billableMinutes)}</TableCell>
+                        <TableCell align="right" onClick={(ev) => ev.stopPropagation()}>
+                          <TargetPercentChip loggedMinutes={e.minutes} targetMinutes={rangeTarget} />
+                        </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell colSpan={6} sx={{ py: 0, ...(open ? {} : { borderBottom: 'none' }) }}>
+                        <TableCell colSpan={7} sx={{ py: 0, ...(open ? {} : { borderBottom: 'none' }) }}>
                           <Collapse in={open} timeout="auto" unmountOnExit>
-                            <ReportEmployeeDetails rows={report.rows.filter((r) => r.userId === e.userId)} />
+                            <ReportEmployeeDetails
+                              rows={report.rows.filter((r) => r.userId === e.userId)}
+                              from={report.from}
+                              to={report.to}
+                              weekTotals={weekTotals.get(e.userId)}
+                            />
                           </Collapse>
                         </TableCell>
                       </TableRow>

@@ -11,9 +11,10 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import dayjs from 'dayjs';
 import { Link as RouterLink } from 'react-router-dom';
 import type { PendingItem } from '../../lib/types';
-import { formatHours } from '../../lib/duration';
+import { formatHours, toMinutes } from '../../lib/duration';
 import ApprovalWeekDetails from './ApprovalWeekDetails';
-import { WEEKLY_TARGET_HOURS, weekProgressFromHours } from '../../lib/weeklyTarget';
+import { WEEKLY_TARGET_HOURS } from '../../lib/weeklyTarget';
+import TargetPercentChip from '../common/TargetPercentChip';
 
 const COLUMNS = 9;
 
@@ -27,25 +28,6 @@ interface ApprovalsTableProps {
   revertPending: boolean;
   /** Undoing an approval is admin-only; managers keep revert on submitted weeks. */
   isAdmin: boolean;
-}
-
-/** Share of the weekly target a submitted week covers; amber when short. */
-function TargetPercent({ totalHours }: { totalHours: string }) {
-  const p = weekProgressFromHours(totalHours);
-  return (
-    <Tooltip
-      title={p.remainingMinutes
-        ? `${formatHours(p.remainingMinutes / 60)} short of ${WEEKLY_TARGET_HOURS}h`
-        : p.overMinutes ? `${formatHours(p.overMinutes / 60)} over ${WEEKLY_TARGET_HOURS}h` : 'Target met'}
-    >
-      <Chip
-        size="small"
-        variant="outlined"
-        label={`${p.percent}%`}
-        color={p.remainingMinutes ? 'warning' : 'success'}
-      />
-    </Tooltip>
-  );
 }
 
 /** The week's full detail in the timesheet viewer, opened on this person and week. */
@@ -122,7 +104,7 @@ export default function ApprovalsTable({
                   <TableCell>{dayjs(t.weekStart).format('D MMM YYYY')}</TableCell>
                   <TableCell align="right">{formatHours(t.totalHours)}</TableCell>
                   <TableCell align="right">
-                    <TargetPercent totalHours={t.totalHours} />
+                    <TargetPercentChip loggedMinutes={toMinutes(t.totalHours)} />
                   </TableCell>
                   <TableCell align="right">{formatHours(t.billableHours)}</TableCell>
                   <TableCell>{t.submittedAt ? dayjs(t.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>

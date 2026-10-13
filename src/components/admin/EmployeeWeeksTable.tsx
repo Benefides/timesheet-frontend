@@ -9,7 +9,9 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import dayjs from 'dayjs';
 import type { TeamTimesheet, TimesheetEntry, TimesheetStatus } from '../../lib/types';
-import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
+import { formatHours, formatMinutes, sumMinutes, toMinutes } from '../../lib/duration';
+import { WEEKLY_TARGET_HOURS } from '../../lib/weeklyTarget';
+import TargetPercentChip from '../common/TargetPercentChip';
 import { REVERTIBLE } from './WeekRevert';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
@@ -50,6 +52,7 @@ export default function EmployeeWeeksTable({
             <TableCell>Week</TableCell>
             <TableCell>Status</TableCell>
             <TableCell align="right">Total</TableCell>
+            <TableCell align="right">Of {WEEKLY_TARGET_HOURS}h</TableCell>
             <TableCell align="right">Billable</TableCell>
             <TableCell>Submitted</TableCell>
             <TableCell>Decided</TableCell>
@@ -59,7 +62,7 @@ export default function EmployeeWeeksTable({
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={canEdit ? 8 : 7}>
+              <TableCell colSpan={canEdit ? 9 : 8}>
                 <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
                   Loading…
                 </Typography>
@@ -81,6 +84,9 @@ export default function EmployeeWeeksTable({
                     <Chip size="small" label={w.status.toLowerCase()} color={STATUS_COLOR[w.status]} />
                   </TableCell>
                   <TableCell align="right">{formatHours(w.totalHours)}</TableCell>
+                  <TableCell align="right">
+                    <TargetPercentChip loggedMinutes={toMinutes(w.totalHours)} />
+                  </TableCell>
                   <TableCell align="right">{formatHours(w.billableHours)}</TableCell>
                   <TableCell>{w.submittedAt ? dayjs(w.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
                   <TableCell>{w.decidedAt ? dayjs(w.decidedAt).format('D MMM, HH:mm') : '—'}</TableCell>
@@ -96,7 +102,7 @@ export default function EmployeeWeeksTable({
                 </TableRow>
 
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 8 : 7} sx={{ p: 0, border: 0 }}>
+                  <TableCell colSpan={canEdit ? 9 : 8} sx={{ p: 0, border: 0 }}>
                     <Collapse in={open === w.id} unmountOnExit>
                       <Stack sx={{ px: 4, py: 3, bgcolor: 'action.hover' }} spacing={2}>
                         {[...Array(7)].map((_, i) => {
@@ -198,7 +204,7 @@ export default function EmployeeWeeksTable({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={canEdit ? 8 : 7}>
+              <TableCell colSpan={canEdit ? 9 : 8}>
                 <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
                   No timesheets yet.
                 </Typography>
