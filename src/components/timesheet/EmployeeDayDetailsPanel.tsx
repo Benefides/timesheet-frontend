@@ -9,6 +9,22 @@ import type { Coworker, Project, Timesheet } from '../../lib/types';
 import { formatMinutes, sumMinutes, formatHours } from '../../lib/duration';
 import ProjectPicker from './ProjectPicker';
 import CoworkerPicker from './CoworkerPicker';
+import SalesOrderField from './SalesOrderField';
+import { WEEKLY_TARGET_HOURS, weekProgress } from '../../lib/weeklyTarget';
+
+/** One line under the form: where the week stands once this entry is added. */
+function WeekRemainingHint({ loggedMinutes, pendingMinutes }: { loggedMinutes: number; pendingMinutes: number }) {
+  const p = weekProgress(loggedMinutes + pendingMinutes);
+  const prefix = pendingMinutes > 0 ? 'After this entry' : 'This week';
+  return (
+    <Typography variant="body2" color={p.remainingMinutes ? 'text.secondary' : 'success.main'}>
+      {prefix}: {formatMinutes(p.loggedMinutes)} of {WEEKLY_TARGET_HOURS}h ({p.percent}%) ·{' '}
+      {p.remainingMinutes
+        ? `${formatMinutes(p.remainingMinutes)} remaining`
+        : p.overMinutes ? `${formatMinutes(p.overMinutes)} over target` : 'target met'}
+    </Typography>
+  );
+}
 
 interface FormData {
   projectId: string;
@@ -16,7 +32,8 @@ interface FormData {
   hours: string;
   minutes: string;
   description: string;
-  isBillable: boolean;
+  /** Sales order number; filled in means billable, blank means non-billable. */
+  salesOrderNumber: string;
   /** Colleagues who worked the same block of time. */
   coworkerIds: string[];
 }
@@ -35,6 +52,10 @@ interface EmployeeDayDetailsPanelProps {
   onAddEntry: () => void;
   onRemoveEntry: (id: string) => void;
   editable: boolean;
+  /** Time already recorded this week, for the weekly-target preview. */
+  weekLoggedMinutes: number;
+  /** The duration being typed. */
+  pendingMinutes: number;
 }
 
 export default function EmployeeDayDetailsPanel({
@@ -50,6 +71,8 @@ export default function EmployeeDayDetailsPanel({
   onAddEntry,
   onRemoveEntry,
   editable,
+  weekLoggedMinutes,
+  pendingMinutes,
 }: EmployeeDayDetailsPanelProps) {
   if (!selectedDate) {
     return (
@@ -99,6 +122,7 @@ export default function EmployeeDayDetailsPanel({
               <TableRow>
                 <TableCell>Project</TableCell>
                 <TableCell>Description</TableCell>
+                <TableCell>SO number</TableCell>
                 <TableCell align="right">Time</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell />
@@ -116,6 +140,7 @@ export default function EmployeeDayDetailsPanel({
                       </Typography>
                     )}
                   </TableCell>
+                  <TableCell>{e.salesOrderNumber || '—'}</TableCell>
                   <TableCell align="right">{formatHours(e.hours)}</TableCell>
                   <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                   <TableCell align="right">
@@ -158,7 +183,6 @@ export default function EmployeeDayDetailsPanel({
                   onFormChange({
                     ...form,
                     projectId: p?.id ?? '',
-                    isBillable: p?.isBillable ?? true,
                     // The colleague list is per project — a stale pick would
                     // name someone who is not on the new project.
                     coworkerIds: [],
@@ -191,6 +215,10 @@ export default function EmployeeDayDetailsPanel({
                 value={form.description}
                 onChange={(e) => onFormChange({ ...form, description: e.target.value })}
               />
+              <SalesOrderField
+                value={form.salesOrderNumber}
+                onChange={(salesOrderNumber) => onFormChange({ ...form, salesOrderNumber })}
+              />
               <CoworkerPicker
                 coworkers={coworkers}
                 value={form.coworkerIds}
@@ -199,6 +227,7 @@ export default function EmployeeDayDetailsPanel({
                 isLoading={coworkersLoading}
                 onChange={(ids) => onFormChange({ ...form, coworkerIds: ids })}
               />
+              <WeekRemainingHint loggedMinutes={weekLoggedMinutes} pendingMinutes={pendingMinutes} />
               <Button
                 variant="contained"
                 disabled={!canAdd || isPending}

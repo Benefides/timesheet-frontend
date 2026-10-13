@@ -77,6 +77,7 @@ export default function DayDetailsPanel({
               <TableRow>
                 <TableCell>Project</TableCell>
                 <TableCell>Description</TableCell>
+                <TableCell>SO number</TableCell>
                 <TableCell align="right">Time</TableCell>
                 <TableCell>Type</TableCell>
                 {canEdit && <TableCell align="right">Edit</TableCell>}
@@ -98,6 +99,7 @@ export default function DayDetailsPanel({
                         </Typography>
                       )}
                     </TableCell>
+                    <TableCell>{e.salesOrderNumber || '—'}</TableCell>
                     <TableCell align="right">{formatHours(e.hours)}</TableCell>
                     <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                     {canEdit && (

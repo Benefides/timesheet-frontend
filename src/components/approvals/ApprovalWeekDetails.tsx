@@ -30,6 +30,7 @@ export default function ApprovalWeekDetails({ weekStart, entries }: ApprovalWeek
             <TableCell sx={{ width: 120 }}>Day</TableCell>
             <TableCell>Project</TableCell>
             <TableCell>Task</TableCell>
+            <TableCell>SO number</TableCell>
             <TableCell>Billable</TableCell>
             <TableCell align="right">Hours</TableCell>
           </TableRow>
@@ -51,7 +52,7 @@ export default function ApprovalWeekDetails({ weekStart, entries }: ApprovalWeek
               return (
                 <TableRow key={day.toString()} sx={{ bgcolor: isWeekend ? 'action.hover' : undefined }}>
                   <TableCell>{label}</TableCell>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <Typography variant="body2" color="text.secondary">No time logged</Typography>
                   </TableCell>
                 </TableRow>
@@ -83,6 +84,7 @@ export default function ApprovalWeekDetails({ weekStart, entries }: ApprovalWeek
                     </Typography>
                   )}
                 </TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{e.salesOrderNumber || '—'}</TableCell>
                 <TableCell>
                   <Chip
                     size="small"

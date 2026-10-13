@@ -1,9 +1,13 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, MenuItem, Paper, Stack, Table, TableBody, TableCell,
-  TableHead, TableRow, TextField, Typography,
+  Alert, Box, Button, CircularProgress, Collapse, IconButton, MenuItem, Paper, Stack, Table, TableBody,
+  TableCell, TableHead, TableRow, TextField, Tooltip, Typography,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useQuery } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -12,6 +16,7 @@ import { formatMinutes } from '../lib/duration';
 import { buildRangeReport, downloadRangeReportXlsx } from '../lib/rangeReport';
 import type { AdminUser, TeamTimesheet, TimesheetStatus } from '../lib/types';
 import StatusFilter from '../components/team/StatusFilter';
+import ReportEmployeeDetails from '../components/reports/ReportEmployeeDetails';
 
 type Status = TimesheetStatus | 'ALL';
 
@@ -24,6 +29,15 @@ export default function ReportsPage() {
   const [status, setStatus] = useState<Status>('ALL');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  // People whose day-by-day detail is open in the summary table.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (userId: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
 
   const fromIso = from?.isValid() ? from.format(ISO) : null;
   const toIso = to?.isValid() ? to.format(ISO) : null;
@@ -129,10 +143,30 @@ export default function ReportsPage() {
               <Typography variant="body2">
                 <strong>{report.rows.length}</strong> entries
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto !important' }}>
+                Click a person to see their day-by-day entries
+              </Typography>
             </Stack>
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    {(() => {
+                      const allOpen = report.byEmployee.every((e) => expanded.has(e.userId));
+                      return (
+                        <Tooltip title={allOpen ? 'Hide all details' : 'Show all details'}>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              setExpanded(allOpen ? new Set() : new Set(report.byEmployee.map((e) => e.userId)))
+                            }
+                          >
+                            {allOpen ? <UnfoldLessIcon fontSize="small" /> : <UnfoldMoreIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell>Employee</TableCell>
                   <TableCell>Code</TableCell>
                   <TableCell align="right">Total</TableCell>
@@ -141,15 +175,36 @@ export default function ReportsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {report.byEmployee.map((e) => (
-                  <TableRow key={e.userId}>
-                    <TableCell>{e.employee}</TableCell>
-                    <TableCell>{e.employeeCode || '—'}</TableCell>
-                    <TableCell align="right">{formatMinutes(e.minutes)}</TableCell>
-                    <TableCell align="right">{formatMinutes(e.billableMinutes)}</TableCell>
-                    <TableCell align="right">{formatMinutes(e.minutes - e.billableMinutes)}</TableCell>
-                  </TableRow>
-                ))}
+                {report.byEmployee.map((e) => {
+                  const open = expanded.has(e.userId);
+                  return (
+                    <Fragment key={e.userId}>
+                      <TableRow
+                        hover
+                        onClick={() => toggle(e.userId)}
+                        sx={{ cursor: 'pointer', '& > td': { borderBottom: open ? 'unset' : undefined } }}
+                      >
+                        <TableCell padding="checkbox">
+                          <IconButton size="small" aria-label={open ? 'Hide details' : 'Show details'}>
+                            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                          </IconButton>
+                        </TableCell>
+                        <TableCell>{e.employee}</TableCell>
+                        <TableCell>{e.employeeCode || '—'}</TableCell>
+                        <TableCell align="right">{formatMinutes(e.minutes)}</TableCell>
+                        <TableCell align="right">{formatMinutes(e.billableMinutes)}</TableCell>
+                        <TableCell align="right">{formatMinutes(e.minutes - e.billableMinutes)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={6} sx={{ py: 0, ...(open ? {} : { borderBottom: 'none' }) }}>
+                          <Collapse in={open} timeout="auto" unmountOnExit>
+                            <ReportEmployeeDetails rows={report.rows.filter((r) => r.userId === e.userId)} />
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           </Paper>

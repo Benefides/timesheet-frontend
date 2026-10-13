@@ -11,6 +11,8 @@ export interface ReportRow {
   projectCode: string;
   projectName: string;
   description: string;
+  /** Empty when the entry has no sales order (and is therefore non-billable). */
+  salesOrderNumber: string;
   isBillable: boolean;
   minutes: number;
   status: TimesheetStatus;
@@ -32,6 +34,14 @@ export interface ProjectTotal {
   billableMinutes: number;
 }
 
+export interface SalesOrderTotal {
+  /** Empty string groups the entries booked without a sales order. */
+  salesOrderNumber: string;
+  projectCodes: string[];
+  minutes: number;
+  billableMinutes: number;
+}
+
 export interface RangeReport {
   from: string;
   to: string;
@@ -40,6 +50,7 @@ export interface RangeReport {
   rows: ReportRow[];
   byEmployee: EmployeeTotal[];
   byProject: ProjectTotal[];
+  bySalesOrder: SalesOrderTotal[];
   totalMinutes: number;
   billableMinutes: number;
 }
@@ -69,6 +80,25 @@ function totalsByProject(rows: ReportRow[]): ProjectTotal[] {
   return [...map.values()].sort((a, b) => a.projectCode.localeCompare(b.projectCode));
 }
 
+/** Totals per sales order; entries without one are grouped last. */
+function totalsBySalesOrder(rows: ReportRow[]): SalesOrderTotal[] {
+  const map = new Map<string, SalesOrderTotal & { codes: Set<string> }>();
+  for (const r of rows) {
+    const so = map.get(r.salesOrderNumber) ?? {
+      salesOrderNumber: r.salesOrderNumber, projectCodes: [], minutes: 0, billableMinutes: 0, codes: new Set(),
+    };
+    so.minutes += r.minutes;
+    if (r.isBillable) so.billableMinutes += r.minutes;
+    if (r.projectCode) so.codes.add(r.projectCode);
+    map.set(r.salesOrderNumber, so);
+  }
+  return [...map.values()]
+    .map(({ codes, ...so }) => ({ ...so, projectCodes: [...codes].sort() }))
+    .sort((a, b) =>
+      !a.salesOrderNumber ? 1 : !b.salesOrderNumber ? -1 : a.salesOrderNumber.localeCompare(b.salesOrderNumber),
+    );
+}
+
 /**
  * Flatten weeks into entries dated within [from, to] (inclusive). The API
  * returns whole weeks overlapping the range, so the edges are trimmed here.
@@ -87,6 +117,7 @@ export function buildRangeReport(weeks: TeamTimesheet[], from: string, to: strin
         projectCode: e.project?.code ?? '',
         projectName: e.project?.name ?? '',
         description: e.description,
+        salesOrderNumber: e.salesOrderNumber ?? '',
         isBillable: e.isBillable,
         minutes: toMinutes(e.hours),
         status: week.status,
@@ -124,6 +155,7 @@ export function buildRangeReport(weeks: TeamTimesheet[], from: string, to: strin
     rows,
     byEmployee: [...byEmployee.values()].sort((a, b) => a.employee.localeCompare(b.employee)),
     byProject: totalsByProject(rows),
+    bySalesOrder: totalsBySalesOrder(rows),
     totalMinutes,
     billableMinutes,
   };
@@ -211,7 +243,7 @@ function addEmployeeSheet(ws: Worksheet, emp: EmployeeTotal, rows: ReportRow[], 
 
   // Both tables share these columns, so each takes the wider of the two needs.
   const gridWidths = [12, 7, ...projects.map(() => 14), 12, 13, 12];
-  const entryWidths = [12, 7, 14, 28, 48, 10, 10, 18, 22];
+  const entryWidths = [12, 7, 14, 28, 16, 48, 10, 10, 18, 22];
   setWidths(ws, Array.from(
     { length: Math.max(gridWidths.length, entryWidths.length) },
     (_, i) => Math.max(gridWidths[i] ?? 0, entryWidths[i] ?? 0),
@@ -259,17 +291,18 @@ function addEmployeeSheet(ws: Worksheet, emp: EmployeeTotal, rows: ReportRow[], 
   ws.addRow([]);
   styleSection(ws.addRow(['Entries']));
   styleHeader(ws.addRow([
-    'Date', 'Day', 'Project code', 'Project name', 'Description', 'Billable', 'Hours', 'Week status', 'Logged by',
+    'Date', 'Day', 'Project code', 'Project name', 'SO number', 'Description', 'Billable', 'Hours',
+    'Week status', 'Logged by',
   ]));
   for (const r of rows) {
     const date = utc(r.workDate);
     const row = ws.addRow([
-      date, WEEKDAYS[date.getUTCDay()], r.projectCode, r.projectName, r.description,
+      date, WEEKDAYS[date.getUTCDay()], r.projectCode, r.projectName, r.salesOrderNumber, r.description,
       r.isBillable ? 'Yes' : 'No', hrs(r.minutes), r.status.replace('_', ' ').toLowerCase(), r.loggedBy,
     ]);
     row.getCell(1).numFmt = DATE_FMT;
-    row.getCell(5).alignment = { wrapText: true, vertical: 'top' };
-    row.getCell(7).numFmt = HOURS_FMT;
+    row.getCell(6).alignment = { wrapText: true, vertical: 'top' };
+    row.getCell(8).numFmt = HOURS_FMT;
   }
 }
 
@@ -337,6 +370,23 @@ function addConsolidatedSheet(ws: Worksheet, report: RangeReport) {
   ]);
   formatHours(projTotal, 3, 5);
   styleTotal(projTotal);
+
+  // --- Totals by sales order -----------------------------------------------
+  ws.addRow([]);
+  ws.addRow([]);
+  styleSection(ws.addRow(['Totals by sales order (SO)']));
+  styleHeader(ws.addRow(['SO number', 'Project code(s)', 'Billable', 'Non-billable', 'Total']));
+  for (const so of report.bySalesOrder) {
+    formatHours(ws.addRow([
+      so.salesOrderNumber || 'No SO number', so.projectCodes.join(', '),
+      hrs(so.billableMinutes), hrs(so.minutes - so.billableMinutes), hrs(so.minutes),
+    ]), 3, 5);
+  }
+  const soTotal = ws.addRow([
+    'Total', '', hrs(report.billableMinutes), hrs(report.totalMinutes - report.billableMinutes), hrs(report.totalMinutes),
+  ]);
+  formatHours(soTotal, 3, 5);
+  styleTotal(soTotal);
 }
 
 /** Build the workbook and hand it to the browser as a download. */

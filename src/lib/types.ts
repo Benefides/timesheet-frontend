@@ -25,7 +25,10 @@ export interface TimesheetEntry {
   projectId: string;
   workDate: string;
   hours: string; // Decimal serialised as string
+  /** Derived by the server: true exactly when the entry carries an SO number. */
   isBillable: boolean;
+  /** Customer sales order the time is billed against; null for non-billable work. */
+  salesOrderNumber?: string | null;
   description: string;
   project?: { code: string; name: string };
   /** Set when a colleague logged this shared entry on the owner's behalf. */

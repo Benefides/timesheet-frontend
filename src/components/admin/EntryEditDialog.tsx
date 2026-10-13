@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
 import {
-  Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel,
-  MenuItem, Stack, Switch, TextField,
+  Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField,
 } from '@mui/material';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { Project, TimesheetEntry } from '../../lib/types';
 import { splitDuration, toDecimalHours } from '../../lib/duration';
 import ProjectPicker from '../timesheet/ProjectPicker';
+import SalesOrderField from '../timesheet/SalesOrderField';
 
 export interface EntryPatch {
   projectId: string;
   workDate: string;
   hours: number;
-  isBillable: boolean;
+  /** Billable is derived from this on the server. */
+  salesOrderNumber: string | null;
   description: string;
 }
 
@@ -49,7 +50,7 @@ export default function EntryEditDialog({
     workDate: '',
     hours: '',
     minutes: '',
-    isBillable: true,
+    salesOrderNumber: '',
     description: '',
   });
 
@@ -63,7 +64,7 @@ export default function EntryEditDialog({
       workDate: dayjs(entry.workDate).format('YYYY-MM-DD'),
       hours: String(hours),
       minutes: String(minutes),
-      isBillable: entry.isBillable,
+      salesOrderNumber: entry.salesOrderNumber ?? '',
       description: entry.description,
     });
   }, [entry]);
@@ -85,11 +86,7 @@ export default function EntryEditDialog({
             value={form.projectId}
             size="small"
             onChange={(p) =>
-              setForm((f) => ({
-                ...f,
-                projectId: p?.id ?? '',
-                isBillable: p?.isBillable ?? f.isBillable,
-              }))
+              setForm((f) => ({ ...f, projectId: p?.id ?? '' }))
             }
           />
 
@@ -137,14 +134,9 @@ export default function EntryEditDialog({
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={form.isBillable}
-                onChange={(e) => setForm((f) => ({ ...f, isBillable: e.target.checked }))}
-              />
-            }
-            label="Billable"
+          <SalesOrderField
+            value={form.salesOrderNumber}
+            onChange={(salesOrderNumber) => setForm((f) => ({ ...f, salesOrderNumber }))}
           />
         </Stack>
       </DialogContent>
@@ -160,7 +152,7 @@ export default function EntryEditDialog({
               projectId: form.projectId,
               workDate: form.workDate,
               hours: duration,
-              isBillable: form.isBillable,
+              salesOrderNumber: form.salesOrderNumber.trim() || null,
               description: form.description.trim(),
             })
           }

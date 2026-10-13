@@ -3,7 +3,7 @@ import { Box, CircularProgress, Grid, Stack } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api, apiErrorMessage } from '../lib/api';
-import { toDecimalHours } from '../lib/duration';
+import { sumMinutes, toDecimalHours, toMinutes } from '../lib/duration';
 import { useMyProjects } from '../lib/hooks';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
 import type { Coworker, Timesheet } from '../lib/types';
@@ -12,6 +12,7 @@ import EmployeeWeekDaysView from '../components/timesheet/EmployeeWeekDaysView';
 import EmployeeDayDetailsPanel from '../components/timesheet/EmployeeDayDetailsPanel';
 import SubmitSection from '../components/timesheet/SubmitSection';
 import StatusAlerts from '../components/timesheet/StatusAlerts';
+import WeeklyTargetCard from '../components/timesheet/WeeklyTargetCard';
 
 const EDITABLE: string[] = ['DRAFT', 'REJECTED', 'SUBMITTED'];
 
@@ -46,7 +47,7 @@ export default function TimesheetPage() {
     hours: '',
     minutes: '',
     description: '',
-    isBillable: true,
+    salesOrderNumber: '',
     coworkerIds: [] as string[],
   });
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +71,8 @@ export default function TimesheetPage() {
         projectId: form.projectId,
         workDate: form.workDate,
         hours: duration,
-        isBillable: form.isBillable,
+        // Billable is decided by the server from the SO number.
+        salesOrderNumber: form.salesOrderNumber.trim() || null,
         description: form.description,
         coworkerIds: form.coworkerIds,
       })).data,
@@ -110,6 +112,10 @@ export default function TimesheetPage() {
     form.projectId && duration > 0 && duration <= 24 && form.description.trim(),
   );
 
+  // Weekly target: what is recorded, plus the entry being typed as a preview.
+  const weekLoggedMinutes = sumMinutes(ts?.entries ?? []);
+  const pendingMinutes = editable && selectedDate && duration > 0 && duration <= 24 ? toMinutes(duration) : 0;
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '50vh' }}>
@@ -138,6 +144,8 @@ export default function TimesheetPage() {
         // date would file the entry into a different week than the one shown.
         setForm((f) => ({ ...f, workDate: w.format('YYYY-MM-DD'), coworkerIds: [] }));
       }} />
+
+      <WeeklyTargetCard loggedMinutes={weekLoggedMinutes} pendingMinutes={pendingMinutes} />
 
       <EmployeeWeekDaysView
         weekStart={weekStart}
@@ -168,6 +176,8 @@ export default function TimesheetPage() {
             onAddEntry={() => addEntry.mutate()}
             onRemoveEntry={(id) => removeEntry.mutate(id)}
             editable={editable}
+            weekLoggedMinutes={weekLoggedMinutes}
+            pendingMinutes={pendingMinutes}
           />
         </Grid>
       </Grid>
