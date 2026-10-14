@@ -75,7 +75,15 @@ export default function ApprovalWeekDetails({ weekStart, entries }: ApprovalWeek
                           {e.project.name}
                         </Typography>
                       </>
-                    ) : '—'}
+                    ) : (
+                      // Typed in, not picked: worth a second look before approving.
+                      <>
+                        <Typography component="span" variant="body2">
+                          {e.customProjectName}
+                        </Typography>{' '}
+                        <Chip size="small" color="warning" variant="outlined" label="not in list" />
+                      </>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{e.description}</Typography>

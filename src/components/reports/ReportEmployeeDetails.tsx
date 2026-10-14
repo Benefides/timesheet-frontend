@@ -111,12 +111,21 @@ export default function ReportEmployeeDetails({ rows, from, to, weekTotals }: Re
                         </TableCell>
                       )}
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
-                          {r.projectCode || '—'}
-                        </Typography>{' '}
-                        <Typography component="span" variant="body2" color="text.secondary">
-                          {r.projectName}
-                        </Typography>
+                        {r.isOtherProject ? (
+                          <>
+                            <Typography component="span" variant="body2">{r.projectName}</Typography>{' '}
+                            <Chip size="small" color="warning" variant="outlined" label="not in list" />
+                          </>
+                        ) : (
+                          <>
+                            <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
+                              {r.projectCode || '—'}
+                            </Typography>{' '}
+                            <Typography component="span" variant="body2" color="text.secondary">
+                              {r.projectName}
+                            </Typography>
+                          </>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{r.description}</Typography>

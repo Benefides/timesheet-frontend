@@ -5,6 +5,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { api, apiErrorMessage } from '../lib/api';
 import { sumMinutes, toDecimalHours, toMinutes } from '../lib/duration';
 import { useMyProjects } from '../lib/hooks';
+import { OTHER_PROJECT_ID, projectFields } from '../lib/entryProject';
 import WeeklyHoursChart from '../components/timesheet/WeeklyHoursChart';
 import type { Coworker, Timesheet } from '../lib/types';
 import EmployeeWeekNavigation from '../components/timesheet/EmployeeWeekNavigation';
@@ -49,6 +50,7 @@ export default function TimesheetPage() {
   };
   const [form, setForm] = useState({
     projectId: '',
+    customProjectName: '',
     workDate: weekStartStr,
     hours: '',
     minutes: '',
@@ -68,13 +70,14 @@ export default function TimesheetPage() {
     queryFn: async () =>
       (await api.get(`/projects/${form.projectId}/coworkers`, { params: { date: form.workDate } }))
         .data,
-    enabled: Boolean(form.projectId && form.workDate),
+    enabled: Boolean(form.projectId && form.projectId !== OTHER_PROJECT_ID && form.workDate),
   });
 
   const addEntry = useMutation({
     mutationFn: async () =>
       (await api.post(`/timesheets/weeks/${weekStartStr}/entries`, {
-        projectId: form.projectId,
+        // "Other" sends the typed project name instead of a project id.
+        ...projectFields(form.projectId, form.customProjectName),
         workDate: form.workDate,
         hours: duration,
         // Billable is decided by the server from the SO number.
@@ -89,6 +92,7 @@ export default function TimesheetPage() {
         minutes: '',
         description: '',
         projectId: '',
+        customProjectName: '',
         coworkerIds: [],
       }));
       setError(null);
@@ -115,7 +119,9 @@ export default function TimesheetPage() {
   // The 24 h ceiling matches the server's, so an over-long entry is refused
   // here rather than as a validation error after the round trip.
   const canAdd = Boolean(
-    form.projectId && duration > 0 && duration <= 24 && form.description.trim(),
+    form.projectId &&
+      (form.projectId !== OTHER_PROJECT_ID || form.customProjectName.trim()) &&
+      duration > 0 && duration <= 24 && form.description.trim(),
   );
 
   // Weekly target: what is recorded, plus the entry being typed as a preview.

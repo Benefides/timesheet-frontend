@@ -1,6 +1,7 @@
 import type { Row, Worksheet } from 'exceljs';
 import type { TeamTimesheet, TimesheetStatus } from './types';
 import { toMinutes } from './duration';
+import { entryProject } from './entryProject';
 
 /** One timesheet entry flattened for the report, already trimmed to the range. */
 export interface ReportRow {
@@ -10,6 +11,8 @@ export interface ReportRow {
   employeeCode: string;
   projectCode: string;
   projectName: string;
+  /** Logged against a typed project name ("Other") rather than a listed project. */
+  isOtherProject: boolean;
   description: string;
   /** Empty when the entry has no sales order (and is therefore non-billable). */
   salesOrderNumber: string;
@@ -30,6 +33,7 @@ export interface EmployeeTotal {
 export interface ProjectTotal {
   projectCode: string;
   projectName: string;
+  isOtherProject: boolean;
   minutes: number;
   billableMinutes: number;
 }
@@ -66,18 +70,32 @@ function daysBetween(from: string, to: string): string[] {
   return days;
 }
 
+/**
+ * Grouping key for a project. "Other" entries share the code OTHER, so each
+ * typed name is its own group; a listed project is grouped by its code.
+ */
+const projectKey = (r: Pick<ReportRow, 'projectCode' | 'projectName' | 'isOtherProject'>) =>
+  r.isOtherProject ? `other:${r.projectName.trim().toLowerCase()}` : `code:${r.projectCode}`;
+
 /** Totals for a set of rows, grouped by project. */
 function totalsByProject(rows: ReportRow[]): ProjectTotal[] {
   const map = new Map<string, ProjectTotal>();
   for (const r of rows) {
-    const p = map.get(r.projectCode) ?? {
-      projectCode: r.projectCode, projectName: r.projectName, minutes: 0, billableMinutes: 0,
+    const p = map.get(projectKey(r)) ?? {
+      projectCode: r.projectCode, projectName: r.projectName, isOtherProject: r.isOtherProject,
+      minutes: 0, billableMinutes: 0,
     };
     p.minutes += r.minutes;
     if (r.isBillable) p.billableMinutes += r.minutes;
-    map.set(r.projectCode, p);
+    map.set(projectKey(r), p);
   }
-  return [...map.values()].sort((a, b) => a.projectCode.localeCompare(b.projectCode));
+  // Listed projects by code, then the "Other" names.
+  return [...map.values()].sort(
+    (a, b) =>
+      Number(a.isOtherProject) - Number(b.isOtherProject) ||
+      a.projectCode.localeCompare(b.projectCode) ||
+      a.projectName.localeCompare(b.projectName),
+  );
 }
 
 /** Totals per sales order; entries without one are grouped last. */
@@ -89,7 +107,7 @@ function totalsBySalesOrder(rows: ReportRow[]): SalesOrderTotal[] {
     };
     so.minutes += r.minutes;
     if (r.isBillable) so.billableMinutes += r.minutes;
-    if (r.projectCode) so.codes.add(r.projectCode);
+    if (r.projectCode) so.codes.add(r.isOtherProject ? `Other: ${r.projectName}` : r.projectCode);
     map.set(r.salesOrderNumber, so);
   }
   return [...map.values()]
@@ -114,8 +132,10 @@ export function buildRangeReport(weeks: TeamTimesheet[], from: string, to: strin
         userId: week.user.id,
         employee: week.user.displayName,
         employeeCode: week.user.employeeCode ?? '',
-        projectCode: e.project?.code ?? '',
-        projectName: e.project?.name ?? '',
+        // "Other" entries carry a typed name instead of a catalogue project.
+        projectCode: entryProject(e).code,
+        projectName: entryProject(e).name,
+        isOtherProject: entryProject(e).isOther,
         description: e.description,
         salesOrderNumber: e.salesOrderNumber ?? '',
         isBillable: e.isBillable,
@@ -271,7 +291,7 @@ function addEmployeeSheet(ws: Worksheet, emp: EmployeeTotal, rows: ReportRow[], 
   for (const day of report.days) {
     const dayRows = byDay.get(day) ?? [];
     const perProject = projects.map((p) =>
-      dayRows.filter((r) => r.projectCode === p.projectCode).reduce((s, r) => s + r.minutes, 0),
+      dayRows.filter((r) => projectKey(r) === projectKey(p)).reduce((s, r) => s + r.minutes, 0),
     );
     const billable = dayRows.filter((r) => r.isBillable).reduce((s, r) => s + r.minutes, 0);
     const total = dayRows.reduce((s, r) => s + r.minutes, 0);

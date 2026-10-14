@@ -22,7 +22,10 @@ export interface Project {
 
 export interface TimesheetEntry {
   id: string;
-  projectId: string;
+  /** Null for an "Other" entry, which carries customProjectName instead. */
+  projectId: string | null;
+  /** Project name typed for this entry because it isn't in the list yet. */
+  customProjectName?: string | null;
   workDate: string;
   hours: string; // Decimal serialised as string
   /** Derived by the server: true exactly when the entry carries an SO number. */

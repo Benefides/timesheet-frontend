@@ -86,7 +86,7 @@ export default function TeamTimesheetsTable({ items, isLoading }: TeamTimesheets
                               <TableRow key={e.id}>
                                 <TableCell>{dayjs(e.workDate).format('ddd D MMM')}</TableCell>
                                 <TableCell>
-                                  {e.project ? `${e.project.code} — ${e.project.name}` : '—'}
+                                  {e.project ? `${e.project.code} — ${e.project.name}` : `Other: ${e.customProjectName ?? ''}`}
                                 </TableCell>
                                 <TableCell>{e.description}</TableCell>
                                 <TableCell align="right">{formatHours(e.hours)}</TableCell>

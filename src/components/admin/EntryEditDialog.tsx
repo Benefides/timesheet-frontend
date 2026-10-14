@@ -8,9 +8,12 @@ import type { Project, TimesheetEntry } from '../../lib/types';
 import { splitDuration, toDecimalHours } from '../../lib/duration';
 import ProjectPicker from '../timesheet/ProjectPicker';
 import SalesOrderField from '../timesheet/SalesOrderField';
+import { OTHER_PROJECT_ID, projectFields } from '../../lib/entryProject';
 
 export interface EntryPatch {
-  projectId: string;
+  /** Null for "Other", which sends customProjectName instead. */
+  projectId: string | null;
+  customProjectName: string | null;
   workDate: string;
   hours: number;
   /** Billable is derived from this on the server. */
@@ -47,6 +50,7 @@ export default function EntryEditDialog({
 }: EntryEditDialogProps) {
   const [form, setForm] = useState({
     projectId: '',
+    customProjectName: '',
     workDate: '',
     hours: '',
     minutes: '',
@@ -60,7 +64,9 @@ export default function EntryEditDialog({
     if (!entry) return;
     const { hours, minutes } = splitDuration(entry.hours);
     setForm({
-      projectId: entry.projectId,
+      // An "Other" entry opens with Other selected and its typed name.
+      projectId: entry.projectId ?? OTHER_PROJECT_ID,
+      customProjectName: entry.customProjectName ?? '',
       workDate: dayjs(entry.workDate).format('YYYY-MM-DD'),
       hours: String(hours),
       minutes: String(minutes),
@@ -70,8 +76,9 @@ export default function EntryEditDialog({
   }, [entry]);
 
   const duration = toDecimalHours(form.hours, form.minutes);
+  const isOther = form.projectId === OTHER_PROJECT_ID;
   const canSave = Boolean(
-    form.projectId && form.workDate && duration > 0 && duration <= 24 && form.description.trim(),
+    form.projectId && (!isOther || form.customProjectName.trim()) && form.workDate && duration > 0 && duration <= 24 && form.description.trim(),
   );
 
   return (
@@ -89,6 +96,22 @@ export default function EntryEditDialog({
               setForm((f) => ({ ...f, projectId: p?.id ?? '' }))
             }
           />
+
+          {isOther ? (
+            <TextField
+              label="Project name"
+              size="small"
+              required
+              value={form.customProjectName}
+              inputProps={{ maxLength: 160 }}
+              helperText="Not in the project list. Once the project is set up, pick it above to file this entry under it."
+              onChange={(e) => setForm((f) => ({ ...f, customProjectName: e.target.value }))}
+            />
+          ) : entry && !entry.projectId && (
+            <Alert severity="info">
+              Was logged as “Other: {entry.customProjectName}”. Saving files it under the project picked above.
+            </Alert>
+          )}
 
           <TextField
             select
@@ -149,7 +172,7 @@ export default function EntryEditDialog({
           disabled={!canSave || isPending}
           onClick={() =>
             onSave({
-              projectId: form.projectId,
+              ...projectFields(form.projectId, form.customProjectName),
               workDate: form.workDate,
               hours: duration,
               salesOrderNumber: form.salesOrderNumber.trim() || null,

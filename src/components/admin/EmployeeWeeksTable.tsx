@@ -13,6 +13,7 @@ import { formatHours, formatMinutes, sumMinutes, toMinutes } from '../../lib/dur
 import { WEEKLY_TARGET_HOURS } from '../../lib/weeklyTarget';
 import TargetPercentChip from '../common/TargetPercentChip';
 import { REVERTIBLE } from './WeekRevert';
+import { entryProjectLabel } from '../../lib/entryProject';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -140,7 +141,7 @@ export default function EmployeeWeeksTable({
                                       <TableBody>
                                         {dayEntries.map((e) => (
                                           <TableRow key={e.id}>
-                                            <TableCell>{e.project?.code ?? '—'}</TableCell>
+                                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{entryProjectLabel(e)}</TableCell>
                                             <TableCell>
                                               {e.description}
                                               {e.createdBy && (

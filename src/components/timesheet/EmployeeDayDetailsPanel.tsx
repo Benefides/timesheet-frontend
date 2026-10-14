@@ -10,6 +10,7 @@ import { formatMinutes, sumMinutes, formatHours } from '../../lib/duration';
 import ProjectPicker from './ProjectPicker';
 import CoworkerPicker from './CoworkerPicker';
 import SalesOrderField from './SalesOrderField';
+import { OTHER_PROJECT_ID, entryProjectLabel } from '../../lib/entryProject';
 import { WEEKLY_TARGET_HOURS, weekProgress } from '../../lib/weeklyTarget';
 
 /** One line under the form: where the week stands once this entry is added. */
@@ -27,7 +28,10 @@ function WeekRemainingHint({ loggedMinutes, pendingMinutes }: { loggedMinutes: n
 }
 
 interface FormData {
+  /** A project id, OTHER_PROJECT_ID, or '' when nothing is chosen. */
   projectId: string;
+  /** The project name typed when "Other" is chosen. */
+  customProjectName: string;
   workDate: string;
   hours: string;
   minutes: string;
@@ -74,6 +78,8 @@ export default function EmployeeDayDetailsPanel({
   weekLoggedMinutes,
   pendingMinutes,
 }: EmployeeDayDetailsPanelProps) {
+  const isOther = form.projectId === OTHER_PROJECT_ID;
+
   if (!selectedDate) {
     return (
       <Paper variant="outlined" sx={{ p: 3 }}>
@@ -132,7 +138,7 @@ export default function EmployeeDayDetailsPanel({
               <TableBody>
                 {dayEntries.map((e) => (
                   <TableRow key={e.id}>
-                    <TableCell>{e.project?.code ?? '—'}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{entryProjectLabel(e)}</TableCell>
                     <TableCell>
                       {e.description}
                       {e.createdBy && (
@@ -171,56 +177,71 @@ export default function EmployeeDayDetailsPanel({
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
             Add time entry
           </Typography>
-          {projects.length === 0 ? (
-            <Alert severity="info">
-              You have no assigned projects yet. An administrator needs to assign you before you can record time.
+          {projects.length === 0 && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              You have no assigned projects yet. Choose “Other (not in list)” to log time against a
+              project by name until an administrator assigns you.
             </Alert>
-          ) : (
-            <Stack spacing={2}>
-              <ProjectPicker
-                projects={projects}
-                value={form.projectId}
-                size="small"
-                onChange={(p) =>
-                  onFormChange({
-                    ...form,
-                    projectId: p?.id ?? '',
-                    // The colleague list is per project — a stale pick would
-                    // name someone who is not on the new project.
-                    coworkerIds: [],
-                  })
-                }
-              />
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  label="Hours"
-                  type="number"
-                  size="small"
-                  sx={{ flex: 1 }}
-                  value={form.hours}
-                  inputProps={{ min: 0, max: 24, step: 1 }}
-                  onChange={(e) => onFormChange({ ...form, hours: e.target.value })}
-                />
-                <TextField
-                  label="Minutes"
-                  type="number"
-                  size="small"
-                  sx={{ flex: 1 }}
-                  value={form.minutes}
-                  inputProps={{ min: 0, max: 59, step: 5 }}
-                  onChange={(e) => onFormChange({ ...form, minutes: e.target.value })}
-                />
-              </Stack>
+          )}
+          <Stack spacing={2}>
+            <ProjectPicker
+              projects={projects}
+              value={form.projectId}
+              size="small"
+              onChange={(p) =>
+                onFormChange({
+                  ...form,
+                  projectId: p?.id ?? '',
+                  // The colleague list is per project — a stale pick would
+                  // name someone who is not on the new project.
+                  coworkerIds: [],
+                })
+              }
+            />
+            {isOther && (
               <TextField
-                label="Description"
+                label="Project name"
                 size="small"
-                value={form.description}
-                onChange={(e) => onFormChange({ ...form, description: e.target.value })}
+                required
+                autoFocus
+                value={form.customProjectName}
+                inputProps={{ maxLength: 160 }}
+                helperText="For a project that isn't in the list yet. An admin can move this entry onto the project once it's set up."
+                onChange={(e) => onFormChange({ ...form, customProjectName: e.target.value })}
               />
-              <SalesOrderField
-                value={form.salesOrderNumber}
-                onChange={(salesOrderNumber) => onFormChange({ ...form, salesOrderNumber })}
+            )}
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="Hours"
+                type="number"
+                size="small"
+                sx={{ flex: 1 }}
+                value={form.hours}
+                inputProps={{ min: 0, max: 24, step: 1 }}
+                onChange={(e) => onFormChange({ ...form, hours: e.target.value })}
               />
+              <TextField
+                label="Minutes"
+                type="number"
+                size="small"
+                sx={{ flex: 1 }}
+                value={form.minutes}
+                inputProps={{ min: 0, max: 59, step: 5 }}
+                onChange={(e) => onFormChange({ ...form, minutes: e.target.value })}
+              />
+            </Stack>
+            <TextField
+              label="Description"
+              size="small"
+              value={form.description}
+              onChange={(e) => onFormChange({ ...form, description: e.target.value })}
+            />
+            <SalesOrderField
+              value={form.salesOrderNumber}
+              onChange={(salesOrderNumber) => onFormChange({ ...form, salesOrderNumber })}
+            />
+            {/* Sharing checks each colleague's assignment, which an unlisted project doesn't have. */}
+            {!isOther && (
               <CoworkerPicker
                 coworkers={coworkers}
                 value={form.coworkerIds}
@@ -229,16 +250,16 @@ export default function EmployeeDayDetailsPanel({
                 isLoading={coworkersLoading}
                 onChange={(ids) => onFormChange({ ...form, coworkerIds: ids })}
               />
-              <WeekRemainingHint loggedMinutes={weekLoggedMinutes} pendingMinutes={pendingMinutes} />
-              <Button
-                variant="contained"
-                disabled={!canAdd || isPending}
-                onClick={onAddEntry}
-              >
-                Add entry
-              </Button>
-            </Stack>
-          )}
+            )}
+            <WeekRemainingHint loggedMinutes={weekLoggedMinutes} pendingMinutes={pendingMinutes} />
+            <Button
+              variant="contained"
+              disabled={!canAdd || isPending}
+              onClick={onAddEntry}
+            >
+              Add entry
+            </Button>
+          </Stack>
         </Paper>
       )}
     </Stack>

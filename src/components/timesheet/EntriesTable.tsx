@@ -6,6 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import dayjs from 'dayjs';
 import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 import type { Timesheet, TimesheetEntry } from '../../lib/types';
+import { entryProjectLabel } from '../../lib/entryProject';
 
 interface EntriesTableProps {
   timesheet: Timesheet | undefined;
@@ -70,7 +71,7 @@ export default function EntriesTable({
                   {dayEntries.length ? (
                     dayEntries.map((e) => (
                       <TableRow key={e.id} hover>
-                        <TableCell>{e.project?.code ?? '—'}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{entryProjectLabel(e)}</TableCell>
                         <TableCell align="right">{formatHours(e.hours)}</TableCell>
                         <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                         <TableCell>{e.description}</TableCell>

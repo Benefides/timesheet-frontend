@@ -7,6 +7,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { TeamTimesheet, TimesheetEntry } from '../../lib/types';
 import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
+import { entryProjectLabel } from '../../lib/entryProject';
 
 interface DayDetailsPanelProps {
   selectedDate: Dayjs | null;
@@ -91,7 +92,7 @@ export default function DayDetailsPanel({
                   const locked = week.status === 'APPROVED';
                   return (
                     <TableRow key={e.id}>
-                      <TableCell>{e.project?.code ?? '—'}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{entryProjectLabel(e)}</TableCell>
                       <TableCell>
                         {e.description}
                         {e.createdBy && (
