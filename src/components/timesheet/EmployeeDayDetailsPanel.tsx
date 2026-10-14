@@ -1,5 +1,5 @@
 import {
-  Alert, Button, IconButton, Paper, Stack, Table, TableBody, TableCell,
+  Alert, Button, IconButton, Paper, Stack, Table, TableBody, TableContainer, TableCell,
   TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -117,43 +117,45 @@ export default function EmployeeDayDetailsPanel({
       {/* Entries for this day */}
       {dayEntries.length ? (
         <Paper variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Project</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>SO number</TableCell>
-                <TableCell align="right">Time</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dayEntries.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell>{e.project?.code ?? '—'}</TableCell>
-                  <TableCell>
-                    {e.description}
-                    {e.createdBy && (
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Added by {e.createdBy.displayName}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>{e.salesOrderNumber || '—'}</TableCell>
-                  <TableCell align="right">{formatHours(e.hours)}</TableCell>
-                  <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
-                  <TableCell align="right">
-                    {editable && (
-                      <IconButton size="small" onClick={() => onRemoveEntry(e.id)}>
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    )}
-                  </TableCell>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Project</TableCell>
+                  <TableCell sx={{ minWidth: 200 }}>Description</TableCell>
+                  <TableCell>SO number</TableCell>
+                  <TableCell align="right">Time</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {dayEntries.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell>{e.project?.code ?? '—'}</TableCell>
+                    <TableCell>
+                      {e.description}
+                      {e.createdBy && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Added by {e.createdBy.displayName}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>{e.salesOrderNumber || '—'}</TableCell>
+                    <TableCell align="right">{formatHours(e.hours)}</TableCell>
+                    <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
+                    <TableCell align="right">
+                      {editable && (
+                        <IconButton size="small" onClick={() => onRemoveEntry(e.id)}>
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
       ) : (
         <Paper variant="outlined" sx={{ p: 2 }}>

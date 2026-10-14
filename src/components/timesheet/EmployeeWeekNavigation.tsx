@@ -32,12 +32,12 @@ export default function EmployeeWeekNavigation({ weekStart, onWeekChange }: Empl
   };
 
   return (
-    <Stack direction="row" alignItems="center" spacing={2}>
+    <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }} useFlexGap flexWrap="wrap">
       <IconButton size="small" onClick={() => onWeekChange(weekStart.subtract(1, 'week'))}>
         <ChevronLeftIcon />
       </IconButton>
 
-      <Box sx={{ minWidth: 200 }}>
+      <Box sx={{ minWidth: { xs: 0, sm: 200 }, flex: { xs: 1, sm: 'none' }, maxWidth: { xs: 220, sm: 'none' } }}>
         <DatePicker
           value={weekStart}
           onChange={handleDateSelect}

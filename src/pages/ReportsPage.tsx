@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, Collapse, IconButton, MenuItem, Paper, Stack, Table, TableBody,
+  Alert, Box, Button, CircularProgress, Collapse, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableContainer,
   TableCell, TableHead, TableRow, TextField, Tooltip, Typography,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -110,11 +110,11 @@ export default function ReportsPage() {
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
           <DatePicker
             label="From" value={from} onChange={setFrom} maxDate={to ?? undefined}
-            slotProps={{ textField: { size: 'small' } }}
+            slotProps={{ textField: { size: 'small', sx: { width: { xs: '100%', md: 180 } } } }}
           />
           <DatePicker
             label="To" value={to} onChange={setTo} minDate={from ?? undefined}
-            slotProps={{ textField: { size: 'small', error: !!rangeError, helperText: rangeError } }}
+            slotProps={{ textField: { size: 'small', sx: { width: { xs: '100%', md: 180 } }, error: !!rangeError, helperText: rangeError } }}
           />
           <TextField
             select size="small" label="Employee" value={employeeId} sx={{ minWidth: 220 }}
@@ -150,7 +150,7 @@ export default function ReportsPage() {
           <Alert severity="info">No time was logged in this range.</Alert>
         ) : (
           <Paper variant="outlined">
-            <Stack direction="row" spacing={4} sx={{ p: 2 }}>
+            <Stack direction="row" spacing={{ xs: 2, sm: 4 }} useFlexGap flexWrap="wrap" sx={{ p: 2 }}>
               <Typography variant="body2">
                 <strong>{formatMinutes(report.totalMinutes)}</strong> total
               </Typography>
@@ -164,81 +164,83 @@ export default function ReportsPage() {
                 Click a person to see their day-by-day entries
               </Typography>
             </Stack>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    {(() => {
-                      const allOpen = report.byEmployee.every((e) => expanded.has(e.userId));
-                      return (
-                        <Tooltip title={allOpen ? 'Hide all details' : 'Show all details'}>
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              setExpanded(allOpen ? new Set() : new Set(report.byEmployee.map((e) => e.userId)))
-                            }
-                          >
-                            {allOpen ? <UnfoldLessIcon fontSize="small" /> : <UnfoldMoreIcon fontSize="small" />}
-                          </IconButton>
-                        </Tooltip>
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell>Employee</TableCell>
-                  <TableCell>Code</TableCell>
-                  <TableCell align="right">Total</TableCell>
-                  <TableCell align="right">Billable</TableCell>
-                  <TableCell align="right">Non-billable</TableCell>
-                  <TableCell align="right">
-                    <Tooltip
-                      title={`${weekdaysBetween(report.from, report.to)} working days × ${formatMinutes(rangeTarget / Math.max(weekdaysBetween(report.from, report.to), 1))} a day`}
-                    >
-                      <span>Of {formatMinutes(rangeTarget)}</span>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {report.byEmployee.map((e) => {
-                  const open = expanded.has(e.userId);
-                  return (
-                    <Fragment key={e.userId}>
-                      <TableRow
-                        hover
-                        onClick={() => toggle(e.userId)}
-                        sx={{ cursor: 'pointer', '& > td': { borderBottom: open ? 'unset' : undefined } }}
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      {(() => {
+                        const allOpen = report.byEmployee.every((e) => expanded.has(e.userId));
+                        return (
+                          <Tooltip title={allOpen ? 'Hide all details' : 'Show all details'}>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                setExpanded(allOpen ? new Set() : new Set(report.byEmployee.map((e) => e.userId)))
+                              }
+                            >
+                              {allOpen ? <UnfoldLessIcon fontSize="small" /> : <UnfoldMoreIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>Employee</TableCell>
+                    <TableCell>Code</TableCell>
+                    <TableCell align="right">Total</TableCell>
+                    <TableCell align="right">Billable</TableCell>
+                    <TableCell align="right">Non-billable</TableCell>
+                    <TableCell align="right">
+                      <Tooltip
+                        title={`${weekdaysBetween(report.from, report.to)} working days × ${formatMinutes(rangeTarget / Math.max(weekdaysBetween(report.from, report.to), 1))} a day`}
                       >
-                        <TableCell padding="checkbox">
-                          <IconButton size="small" aria-label={open ? 'Hide details' : 'Show details'}>
-                            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                          </IconButton>
-                        </TableCell>
-                        <TableCell>{e.employee}</TableCell>
-                        <TableCell>{e.employeeCode || '—'}</TableCell>
-                        <TableCell align="right">{formatMinutes(e.minutes)}</TableCell>
-                        <TableCell align="right">{formatMinutes(e.billableMinutes)}</TableCell>
-                        <TableCell align="right">{formatMinutes(e.minutes - e.billableMinutes)}</TableCell>
-                        <TableCell align="right" onClick={(ev) => ev.stopPropagation()}>
-                          <TargetPercentChip loggedMinutes={e.minutes} targetMinutes={rangeTarget} />
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell colSpan={7} sx={{ py: 0, ...(open ? {} : { borderBottom: 'none' }) }}>
-                          <Collapse in={open} timeout="auto" unmountOnExit>
-                            <ReportEmployeeDetails
-                              rows={report.rows.filter((r) => r.userId === e.userId)}
-                              from={report.from}
-                              to={report.to}
-                              weekTotals={weekTotals.get(e.userId)}
-                            />
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <span>Of {formatMinutes(rangeTarget)}</span>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {report.byEmployee.map((e) => {
+                    const open = expanded.has(e.userId);
+                    return (
+                      <Fragment key={e.userId}>
+                        <TableRow
+                          hover
+                          onClick={() => toggle(e.userId)}
+                          sx={{ cursor: 'pointer', '& > td': { borderBottom: open ? 'unset' : undefined } }}
+                        >
+                          <TableCell padding="checkbox">
+                            <IconButton size="small" aria-label={open ? 'Hide details' : 'Show details'}>
+                              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                            </IconButton>
+                          </TableCell>
+                          <TableCell>{e.employee}</TableCell>
+                          <TableCell>{e.employeeCode || '—'}</TableCell>
+                          <TableCell align="right">{formatMinutes(e.minutes)}</TableCell>
+                          <TableCell align="right">{formatMinutes(e.billableMinutes)}</TableCell>
+                          <TableCell align="right">{formatMinutes(e.minutes - e.billableMinutes)}</TableCell>
+                          <TableCell align="right" onClick={(ev) => ev.stopPropagation()}>
+                            <TargetPercentChip loggedMinutes={e.minutes} targetMinutes={rangeTarget} />
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={7} sx={{ py: 0, ...(open ? {} : { borderBottom: 'none' }) }}>
+                            <Collapse in={open} timeout="auto" unmountOnExit>
+                              <ReportEmployeeDetails
+                                rows={report.rows.filter((r) => r.userId === e.userId)}
+                                from={report.from}
+                                to={report.to}
+                                weekTotals={weekTotals.get(e.userId)}
+                              />
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      </Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Paper>
         )
       )}

@@ -15,7 +15,7 @@ export default function EmployeesList({
   isLoading,
 }: EmployeesListProps) {
   return (
-    <Paper variant="outlined" sx={{ p: 2, maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }}>
+    <Paper variant="outlined" sx={{ p: 2, maxHeight: { xs: 240, md: 'calc(100vh - 200px)' }, overflow: 'auto' }}>
       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
         Team
       </Typography>

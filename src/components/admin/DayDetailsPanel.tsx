@@ -1,5 +1,5 @@
 import {
-  IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography,
+  IconButton, Paper, Stack, Table, TableBody, TableContainer, TableCell, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -72,65 +72,67 @@ export default function DayDetailsPanel({
 
       {rows.length ? (
         <Paper variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Project</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>SO number</TableCell>
-                <TableCell align="right">Time</TableCell>
-                <TableCell>Type</TableCell>
-                {canEdit && <TableCell align="right">Edit</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map(({ entry: e, week }) => {
-                // A finally approved week is immutable: it has to be reverted
-                // first, so the approval being undone is recorded.
-                const locked = week.status === 'APPROVED';
-                return (
-                  <TableRow key={e.id}>
-                    <TableCell>{e.project?.code ?? '—'}</TableCell>
-                    <TableCell>
-                      {e.description}
-                      {e.createdBy && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          Added by {e.createdBy.displayName}
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>{e.salesOrderNumber || '—'}</TableCell>
-                    <TableCell align="right">{formatHours(e.hours)}</TableCell>
-                    <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
-                    {canEdit && (
-                      <TableCell align="right">
-                        <Tooltip title={locked ? 'Revert the approved week before editing it' : ''}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={locked}
-                              aria-label="Edit entry"
-                              onClick={() => onEditEntry?.(e)}
-                            >
-                              <EditOutlinedIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              disabled={locked}
-                              aria-label="Delete entry"
-                              onClick={() => onDeleteEntry?.(e)}
-                            >
-                              <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Project</TableCell>
+                  <TableCell sx={{ minWidth: 200 }}>Description</TableCell>
+                  <TableCell>SO number</TableCell>
+                  <TableCell align="right">Time</TableCell>
+                  <TableCell>Type</TableCell>
+                  {canEdit && <TableCell align="right">Edit</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map(({ entry: e, week }) => {
+                  // A finally approved week is immutable: it has to be reverted
+                  // first, so the approval being undone is recorded.
+                  const locked = week.status === 'APPROVED';
+                  return (
+                    <TableRow key={e.id}>
+                      <TableCell>{e.project?.code ?? '—'}</TableCell>
+                      <TableCell>
+                        {e.description}
+                        {e.createdBy && (
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Added by {e.createdBy.displayName}
+                          </Typography>
+                        )}
                       </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      <TableCell>{e.salesOrderNumber || '—'}</TableCell>
+                      <TableCell align="right">{formatHours(e.hours)}</TableCell>
+                      <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
+                      {canEdit && (
+                        <TableCell align="right">
+                          <Tooltip title={locked ? 'Revert the approved week before editing it' : ''}>
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={locked}
+                                aria-label="Edit entry"
+                                onClick={() => onEditEntry?.(e)}
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                disabled={locked}
+                                aria-label="Delete entry"
+                                onClick={() => onDeleteEntry?.(e)}
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
       ) : (
         <Paper variant="outlined" sx={{ p: 2 }}>

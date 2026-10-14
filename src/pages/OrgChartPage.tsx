@@ -150,11 +150,13 @@ export default function OrgChartPage() {
     return (
       <>
         <Stack
-          direction="row" alignItems="center" spacing={1}
+          direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap"
           sx={{
-            pl: depth * 4, py: 0.75, borderRadius: 1,
+            pl: { xs: depth * 2, sm: depth * 4 }, py: 0.75, borderRadius: 1,
             '&:hover': { bgcolor: 'action.hover' },
             '&:hover .row-actions': { visibility: 'visible' },
+            // Touch screens have no hover, so the action is always shown there.
+            '@media (hover: none)': { '& .row-actions': { visibility: 'visible' } },
           }}
         >
           {depth > 0 && <Box sx={{ color: 'text.disabled', fontFamily: 'monospace' }}>└─</Box>}

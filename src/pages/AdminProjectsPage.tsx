@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControlLabel, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableCell,
+  FormControlLabel, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableContainer, TableCell,
   TableHead, TableRow, TextField, Tooltip, Typography,
 } from '@mui/material';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
@@ -78,7 +78,7 @@ export default function AdminProjectsPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" useFlexGap flexWrap="wrap" spacing={1}>
         <Box>
           <Typography variant="h5">Projects</Typography>
           <Typography color="text.secondary">
@@ -93,40 +93,42 @@ export default function AdminProjectsPage() {
       {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
 
       <Paper variant="outlined">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Billable</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right" />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(projects.data ?? []).map((p) => (
-              <TableRow key={p.id} hover>
-                <TableCell sx={{ fontFamily: 'monospace' }}>{p.code}</TableCell>
-                <TableCell>{p.name}</TableCell>
-                <TableCell>{p.isBillable ? 'Yes' : 'No'}</TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={p.isActive ? 'active' : 'archived'}
-                    color={p.isActive ? 'success' : 'default'}
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <Button size="small" onClick={() => setManaging(p)}>People</Button>
-                  <Button size="small" onClick={() => setEditing(p)}>Edit</Button>
-                </TableCell>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Code</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Billable</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right" />
               </TableRow>
-            ))}
-            {projects.isLoading && (
-              <TableRow><TableCell colSpan={5}>Loading…</TableCell></TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {(projects.data ?? []).map((p) => (
+                <TableRow key={p.id} hover>
+                  <TableCell sx={{ fontFamily: 'monospace' }}>{p.code}</TableCell>
+                  <TableCell>{p.name}</TableCell>
+                  <TableCell>{p.isBillable ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={p.isActive ? 'active' : 'archived'}
+                      color={p.isActive ? 'success' : 'default'}
+                    />
+                  </TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    <Button size="small" onClick={() => setManaging(p)}>People</Button>
+                    <Button size="small" onClick={() => setEditing(p)}>Edit</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {projects.isLoading && (
+                <TableRow><TableCell colSpan={5}>Loading…</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
 
       {/* ---- New project ---- */}
@@ -328,7 +330,7 @@ function EnrollmentDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {notice && <Alert severity="success" onClose={() => setNotice(null)}>{notice}</Alert>}
-          <Stack direction="row" spacing={1}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <TextField
               select fullWidth size="small" label="Add person" value={userId}
               onChange={(e) => setUserId(e.target.value)}
@@ -357,42 +359,44 @@ function EnrollmentDialog({
             </Button>
           </Stack>
 
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Since</TableCell>
-                <TableCell align="right" />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {current.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell>{a.user.displayName}</TableCell>
-                  <TableCell>{dayjs(a.effectiveFrom).format('D MMM YYYY')}</TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="End enrollment (history is kept)">
-                      <span>
-                        <IconButton
-                          size="small"
-                          disabled={unenroll.isPending}
-                          onClick={() => unenroll.mutate(a.id)}
-                        >
-                          <PersonRemoveIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </TableCell>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Since</TableCell>
+                  <TableCell align="right" />
                 </TableRow>
-              ))}
-              {!assignments.isLoading && current.length === 0 && (
-                <TableRow><TableCell colSpan={3}>Nobody enrolled yet.</TableCell></TableRow>
-              )}
-              {assignments.isLoading && (
-                <TableRow><TableCell colSpan={3}>Loading…</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {current.map((a) => (
+                  <TableRow key={a.id}>
+                    <TableCell>{a.user.displayName}</TableCell>
+                    <TableCell>{dayjs(a.effectiveFrom).format('D MMM YYYY')}</TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="End enrollment (history is kept)">
+                        <span>
+                          <IconButton
+                            size="small"
+                            disabled={unenroll.isPending}
+                            onClick={() => unenroll.mutate(a.id)}
+                          >
+                            <PersonRemoveIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!assignments.isLoading && current.length === 0 && (
+                  <TableRow><TableCell colSpan={3}>Nobody enrolled yet.</TableCell></TableRow>
+                )}
+                {assignments.isLoading && (
+                  <TableRow><TableCell colSpan={3}>Loading…</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Stack>
       </DialogContent>
       <DialogActions>

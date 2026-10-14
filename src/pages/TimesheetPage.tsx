@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, CircularProgress, Grid, Stack } from '@mui/material';
+import { Box, CircularProgress, Grid, Stack, Typography } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { api, apiErrorMessage } from '../lib/api';
@@ -133,11 +133,15 @@ export default function TimesheetPage() {
   return (
     <Stack spacing={3}>
       <Box>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-          <Stack>
-            <h2 style={{ margin: 0 }}>My timesheet</h2>
-          </Stack>
-          <Box sx={{ minWidth: 200 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          justifyContent="space-between"
+          spacing={1.5}
+          sx={{ mb: { xs: 1, sm: 3 } }}
+        >
+          <Typography variant="h5">My timesheet</Typography>
+          <Box sx={{ minWidth: { sm: 200 } }}>
             <StatusAlerts timesheet={ts} error={error} onErrorClear={() => setError(null)} />
           </Box>
         </Stack>
@@ -167,7 +171,7 @@ export default function TimesheetPage() {
         editable={editable}
       />
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         <Grid item xs={12}>
           <EmployeeDayDetailsPanel
             selectedDate={selectedDate}

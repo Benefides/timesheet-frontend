@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import {
-  Box, Button, Chip, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead,
+  Box, Button, Chip, Collapse, IconButton, Paper, Stack, Table, TableBody, TableContainer, TableCell, TableHead,
   TableRow, Tooltip, Typography,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -45,174 +45,178 @@ export default function EmployeeWeeksTable({
 
   return (
     <Paper variant="outlined">
-      <Table>
-        <TableHead>
-          <TableRow sx={{ bgcolor: 'action.hover' }}>
-            <TableCell />
-            <TableCell>Week</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell align="right">Total</TableCell>
-            <TableCell align="right">Of {WEEKLY_TARGET_HOURS}h</TableCell>
-            <TableCell align="right">Billable</TableCell>
-            <TableCell>Submitted</TableCell>
-            <TableCell>Decided</TableCell>
-            {canEdit && <TableCell align="right">Week</TableCell>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={canEdit ? 9 : 8}>
-                <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-                  Loading…
-                </Typography>
-              </TableCell>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'action.hover' }}>
+              <TableCell />
+              <TableCell>Week</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right">Total</TableCell>
+              <TableCell align="right">Of {WEEKLY_TARGET_HOURS}h</TableCell>
+              <TableCell align="right">Billable</TableCell>
+              <TableCell>Submitted</TableCell>
+              <TableCell>Decided</TableCell>
+              {canEdit && <TableCell align="right">Week</TableCell>}
             </TableRow>
-          ) : weeks.length ? (
-            weeks.map((w) => (
-              <Fragment key={w.id}>
-                <TableRow hover>
-                  <TableCell padding="checkbox">
-                    <IconButton size="small" onClick={() => setOpen(open === w.id ? null : w.id)}>
-                      {open === w.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                    </IconButton>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 500 }}>
-                    {dayjs(w.weekStart).format('MMM D')} – {dayjs(w.weekStart).add(6, 'day').format('MMM D, YYYY')}
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" label={w.status.toLowerCase()} color={STATUS_COLOR[w.status]} />
-                  </TableCell>
-                  <TableCell align="right">{formatHours(w.totalHours)}</TableCell>
-                  <TableCell align="right">
-                    <TargetPercentChip loggedMinutes={toMinutes(w.totalHours)} />
-                  </TableCell>
-                  <TableCell align="right">{formatHours(w.billableHours)}</TableCell>
-                  <TableCell>{w.submittedAt ? dayjs(w.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
-                  <TableCell>{w.decidedAt ? dayjs(w.decidedAt).format('D MMM, HH:mm') : '—'}</TableCell>
-                  {canEdit && (
-                    <TableCell align="right">
-                      {REVERTIBLE.includes(w.status) && (
-                        <Button size="small" color="warning" onClick={() => onRevertWeek?.(w)}>
-                          Revert
-                        </Button>
-                      )}
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={canEdit ? 9 : 8}>
+                  <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                    Loading…
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : weeks.length ? (
+              weeks.map((w) => (
+                <Fragment key={w.id}>
+                  <TableRow hover>
+                    <TableCell padding="checkbox">
+                      <IconButton size="small" onClick={() => setOpen(open === w.id ? null : w.id)}>
+                        {open === w.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                      </IconButton>
                     </TableCell>
-                  )}
-                </TableRow>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {dayjs(w.weekStart).format('MMM D')} – {dayjs(w.weekStart).add(6, 'day').format('MMM D, YYYY')}
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" label={w.status.toLowerCase()} color={STATUS_COLOR[w.status]} />
+                    </TableCell>
+                    <TableCell align="right">{formatHours(w.totalHours)}</TableCell>
+                    <TableCell align="right">
+                      <TargetPercentChip loggedMinutes={toMinutes(w.totalHours)} />
+                    </TableCell>
+                    <TableCell align="right">{formatHours(w.billableHours)}</TableCell>
+                    <TableCell>{w.submittedAt ? dayjs(w.submittedAt).format('D MMM, HH:mm') : '—'}</TableCell>
+                    <TableCell>{w.decidedAt ? dayjs(w.decidedAt).format('D MMM, HH:mm') : '—'}</TableCell>
+                    {canEdit && (
+                      <TableCell align="right">
+                        {REVERTIBLE.includes(w.status) && (
+                          <Button size="small" color="warning" onClick={() => onRevertWeek?.(w)}>
+                            Revert
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
 
-                <TableRow>
-                  <TableCell colSpan={canEdit ? 9 : 8} sx={{ p: 0, border: 0 }}>
-                    <Collapse in={open === w.id} unmountOnExit>
-                      <Stack sx={{ px: 4, py: 3, bgcolor: 'action.hover' }} spacing={2}>
-                        {[...Array(7)].map((_, i) => {
-                          const day = dayjs(w.weekStart).add(i, 'day');
-                          const dayKey = day.format('YYYY-MM-DD');
-                          const dayEntries = w.entries.filter((e) => dayjs(e.workDate).format('YYYY-MM-DD') === dayKey);
-                          const dayTotal = sumMinutes(dayEntries);
+                  <TableRow>
+                    <TableCell colSpan={canEdit ? 9 : 8} sx={{ p: 0, border: 0 }}>
+                      <Collapse in={open === w.id} unmountOnExit>
+                        <Stack sx={{ px: 4, py: 3, bgcolor: 'action.hover' }} spacing={2}>
+                          {[...Array(7)].map((_, i) => {
+                            const day = dayjs(w.weekStart).add(i, 'day');
+                            const dayKey = day.format('YYYY-MM-DD');
+                            const dayEntries = w.entries.filter((e) => dayjs(e.workDate).format('YYYY-MM-DD') === dayKey);
+                            const dayTotal = sumMinutes(dayEntries);
 
-                          if (!dayEntries.length && dayTotal === 0) return null;
+                            if (!dayEntries.length && dayTotal === 0) return null;
 
-                          return (
-                            <Box key={dayKey}>
-                              <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {day.format('dddd, D MMM')}
-                                </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {dayTotal ? formatMinutes(dayTotal) : '—'}
-                                </Typography>
-                              </Stack>
-                              {dayEntries.length ? (
-                                <Table size="small" sx={{ ml: 2 }}>
-                                  <TableHead>
-                                    <TableRow>
-                                      <TableCell>Project</TableCell>
-                                      <TableCell>Description</TableCell>
-                                      <TableCell>SO number</TableCell>
-                                      <TableCell align="right">Time</TableCell>
-                                      <TableCell>Type</TableCell>
-                                      {canEdit && <TableCell align="right">Edit</TableCell>}
-                                    </TableRow>
-                                  </TableHead>
-                                  <TableBody>
-                                    {dayEntries.map((e) => (
-                                      <TableRow key={e.id}>
-                                        <TableCell>{e.project?.code ?? '—'}</TableCell>
-                                        <TableCell>
-                                          {e.description}
-                                          {e.createdBy && (
-                                            <Typography
-                                              variant="caption"
-                                              color="text.secondary"
-                                              display="block"
-                                            >
-                                              Added by {e.createdBy.displayName}
-                                            </Typography>
-                                          )}
-                                        </TableCell>
-                                        <TableCell>{e.salesOrderNumber || '—'}</TableCell>
-                                        <TableCell align="right">{formatHours(e.hours)}</TableCell>
-                                        <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
-                                        {canEdit && (
-                                          <TableCell align="right">
-                                            <Tooltip
-                                              title={
-                                                w.status === 'APPROVED'
-                                                  ? 'Revert the approved week before editing it'
-                                                  : ''
-                                              }
-                                            >
-                                              <span>
-                                                <IconButton
-                                                  size="small"
-                                                  disabled={w.status === 'APPROVED'}
-                                                  aria-label="Edit entry"
-                                                  onClick={() => onEditEntry?.(e, w)}
+                            return (
+                              <Box key={dayKey}>
+                                <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {day.format('dddd, D MMM')}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {dayTotal ? formatMinutes(dayTotal) : '—'}
+                                  </Typography>
+                                </Stack>
+                                {dayEntries.length ? (
+                                  <TableContainer>
+                                    <Table size="small" sx={{ ml: 2 }}>
+                                      <TableHead>
+                                        <TableRow>
+                                          <TableCell>Project</TableCell>
+                                          <TableCell sx={{ minWidth: 200 }}>Description</TableCell>
+                                          <TableCell>SO number</TableCell>
+                                          <TableCell align="right">Time</TableCell>
+                                          <TableCell>Type</TableCell>
+                                          {canEdit && <TableCell align="right">Edit</TableCell>}
+                                        </TableRow>
+                                      </TableHead>
+                                      <TableBody>
+                                        {dayEntries.map((e) => (
+                                          <TableRow key={e.id}>
+                                            <TableCell>{e.project?.code ?? '—'}</TableCell>
+                                            <TableCell>
+                                              {e.description}
+                                              {e.createdBy && (
+                                                <Typography
+                                                  variant="caption"
+                                                  color="text.secondary"
+                                                  display="block"
                                                 >
-                                                  <EditOutlinedIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton
-                                                  size="small"
-                                                  disabled={w.status === 'APPROVED'}
-                                                  aria-label="Delete entry"
-                                                  onClick={() => onDeleteEntry?.(e, w)}
+                                                  Added by {e.createdBy.displayName}
+                                                </Typography>
+                                              )}
+                                            </TableCell>
+                                            <TableCell>{e.salesOrderNumber || '—'}</TableCell>
+                                            <TableCell align="right">{formatHours(e.hours)}</TableCell>
+                                            <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
+                                            {canEdit && (
+                                              <TableCell align="right">
+                                                <Tooltip
+                                                  title={
+                                                    w.status === 'APPROVED'
+                                                      ? 'Revert the approved week before editing it'
+                                                      : ''
+                                                  }
                                                 >
-                                                  <DeleteOutlineIcon fontSize="small" />
-                                                </IconButton>
-                                              </span>
-                                            </Tooltip>
-                                          </TableCell>
-                                        )}
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              ) : (
-                                <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                                  No entries
-                                </Typography>
-                              )}
-                            </Box>
-                          );
-                        })}
-                      </Stack>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </Fragment>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={canEdit ? 9 : 8}>
-                <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-                  No timesheets yet.
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                                                  <span>
+                                                    <IconButton
+                                                      size="small"
+                                                      disabled={w.status === 'APPROVED'}
+                                                      aria-label="Edit entry"
+                                                      onClick={() => onEditEntry?.(e, w)}
+                                                    >
+                                                      <EditOutlinedIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton
+                                                      size="small"
+                                                      disabled={w.status === 'APPROVED'}
+                                                      aria-label="Delete entry"
+                                                      onClick={() => onDeleteEntry?.(e, w)}
+                                                    >
+                                                      <DeleteOutlineIcon fontSize="small" />
+                                                    </IconButton>
+                                                  </span>
+                                                </Tooltip>
+                                              </TableCell>
+                                            )}
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </TableContainer>
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+                                    No entries
+                                  </Typography>
+                                )}
+                              </Box>
+                            );
+                          })}
+                        </Stack>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </Fragment>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={canEdit ? 9 : 8}>
+                  <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                    No timesheets yet.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Paper>
   );
 }

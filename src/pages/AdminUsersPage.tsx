@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem,
-  Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography,
+  Paper, Stack, Table, TableBody, TableContainer, TableCell, TableHead, TableRow, TextField, Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -101,66 +101,68 @@ export default function AdminUsersPage() {
       {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
 
       <Paper variant="outlined">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Code</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right" />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(users.data ?? []).map((u) => (
-              <TableRow key={u.id} hover>
-                <TableCell>
-                  <Button
-                    variant="text"
-                    size="small"
-                    sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-                    onClick={() => navigate(`/admin/employees/${u.id}`)}
-                  >
-                    {u.displayName}
-                  </Button>
-                </TableCell>
-                <TableCell sx={{ fontFamily: 'monospace' }}>{u.employeeCode || '—'}</TableCell>
-                <TableCell>{u.email}</TableCell>
-                <TableCell>{u.role.toLowerCase()}</TableCell>
-                <TableCell><Chip size="small" label={u.status} color={STATUS_COLOR[u.status]} /></TableCell>
-                <TableCell align="right">
-                  {u.status === 'PENDING_SETUP' && (
-                    <Button size="small" variant="contained" onClick={() => openSetup(u)}>
-                      Complete setup
-                    </Button>
-                  )}
-                  {u.status === 'ACTIVE' && (
-                    <Button size="small" onClick={() => openCodeEdit(u)}>
-                      Edit code
-                    </Button>
-                  )}
-                  {u.status === 'ACTIVE' && u.id !== me.data?.id && (
-                    <>
-                      <Button
-                        size="small"
-                        onClick={() => { setNewRole(u.role); setRoleTarget(u); }}
-                      >
-                        Change role
-                      </Button>
-                      <Button size="small" color="error" onClick={() => setDeactTarget(u)}>
-                        Deactivate
-                      </Button>
-                    </>
-                  )}
-                </TableCell>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Code</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right" />
               </TableRow>
-            ))}
-            {users.isLoading && (
-              <TableRow><TableCell colSpan={6}>Loading…</TableCell></TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {(users.data ?? []).map((u) => (
+                <TableRow key={u.id} hover>
+                  <TableCell>
+                    <Button
+                      variant="text"
+                      size="small"
+                      sx={{ textTransform: 'none', justifyContent: 'flex-start', whiteSpace: 'nowrap' }}
+                      onClick={() => navigate(`/admin/employees/${u.id}`)}
+                    >
+                      {u.displayName}
+                    </Button>
+                  </TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{u.employeeCode || '—'}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>{u.role.toLowerCase()}</TableCell>
+                  <TableCell><Chip size="small" label={u.status} color={STATUS_COLOR[u.status]} /></TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    {u.status === 'PENDING_SETUP' && (
+                      <Button size="small" variant="contained" onClick={() => openSetup(u)}>
+                        Complete setup
+                      </Button>
+                    )}
+                    {u.status === 'ACTIVE' && (
+                      <Button size="small" onClick={() => openCodeEdit(u)}>
+                        Edit code
+                      </Button>
+                    )}
+                    {u.status === 'ACTIVE' && u.id !== me.data?.id && (
+                      <>
+                        <Button
+                          size="small"
+                          onClick={() => { setNewRole(u.role); setRoleTarget(u); }}
+                        >
+                          Change role
+                        </Button>
+                        <Button size="small" color="error" onClick={() => setDeactTarget(u)}>
+                          Deactivate
+                        </Button>
+                      </>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {users.isLoading && (
+                <TableRow><TableCell colSpan={6}>Loading…</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
 
       <Dialog open={Boolean(target)} onClose={() => setTarget(null)} fullWidth maxWidth="sm">

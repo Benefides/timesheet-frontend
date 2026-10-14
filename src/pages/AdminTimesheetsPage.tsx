@@ -76,6 +76,8 @@ export default function AdminTimesheetsPage() {
       <Box
         sx={{
           display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
           justifyContent: 'space-between',
           alignItems: 'center',
           pb: 2,
@@ -92,7 +94,7 @@ export default function AdminTimesheetsPage() {
           <Typography variant="h5">Timesheets</Typography>
         </Stack>
         {selectedEmployee && (
-          <Stack alignItems="flex-end">
+          <Stack alignItems={{ xs: 'flex-start', sm: 'flex-end' }} sx={{ minWidth: 0 }}>
             <Typography variant="subtitle1">{selectedEmployee.displayName}</Typography>
             <Typography variant="caption" color="text.secondary">
               {selectedEmployee.email}
@@ -104,7 +106,7 @@ export default function AdminTimesheetsPage() {
       {/* Week Navigation */}
       <WeekNavigationAdmin weekStart={weekStart} onWeekChange={setWeekStart} />
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         {/* Left: Employees List */}
         <Grid item xs={12} md={3}>
           <EmployeesList

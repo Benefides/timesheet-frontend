@@ -43,7 +43,7 @@ export default function WeekDaysView({
   return (
     <Stack spacing={2}>
       {/* Days Grid */}
-      <Stack direction="row" spacing={1}>
+      <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
         {days.map((day) => {
           const isSelected = selectedDate && day.isSame(selectedDate, 'day');
           // All seven days belong to the SAME timesheet — the one keyed by the
@@ -59,17 +59,23 @@ export default function WeekDaysView({
               variant={isSelected ? 'contained' : 'outlined'}
               sx={{
                 flex: 1,
-                minHeight: 100,
-                p: 1,
+                minWidth: 0,
+                minHeight: { xs: 72, sm: 100 },
+                p: { xs: 0.5, sm: 1 },
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
               onClick={() => onSelectDate(day)}
             >
-              <Typography variant="subtitle2">{day.format('ddd')}</Typography>
+              <Typography variant="subtitle2" sx={{ fontSize: { xs: 11, sm: 14 } }}>{day.format('ddd')}</Typography>
               <Typography variant="h6">{day.format('D')}</Typography>
-              <Typography variant="caption" color="text.secondary">
+              {/* "7h 30m" may break onto two lines on a phone rather than overflow. */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: { xs: 10, sm: 12 }, lineHeight: 1.2, textAlign: 'center' }}
+              >
                 {dayTotal ? formatMinutes(dayTotal) : '—'}
               </Typography>
             </Button>
@@ -79,7 +85,7 @@ export default function WeekDaysView({
 
       {/* Status Bar */}
       {weekOfTheWeek && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', alignItems: 'center' }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="body2">
               {weekStart.format('MMM D')} – {weekStart.add(6, 'day').format('MMM D')}

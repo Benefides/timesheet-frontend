@@ -12,7 +12,7 @@ export default function EmployeeHeader({ employee }: EmployeeHeaderProps) {
   return (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
       <Box>
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
           <Button variant="text" size="small" onClick={() => navigate('/admin/users')}>
             People
           </Button>
