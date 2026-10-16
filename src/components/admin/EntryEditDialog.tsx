@@ -88,6 +88,12 @@ export default function EntryEditDialog({
         <Stack spacing={2} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
 
+          <SalesOrderField
+            value={form.salesOrderNumber}
+            onChange={(salesOrderNumber) => setForm((f) => ({ ...f, salesOrderNumber }))}
+            saved={{ number: entry?.salesOrderNumber, customer: entry?.customerName }}
+          />
+
           <ProjectPicker
             projects={projects}
             value={form.projectId}
@@ -155,11 +161,6 @@ export default function EntryEditDialog({
             minRows={2}
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          />
-
-          <SalesOrderField
-            value={form.salesOrderNumber}
-            onChange={(salesOrderNumber) => setForm((f) => ({ ...f, salesOrderNumber }))}
           />
         </Stack>
       </DialogContent>

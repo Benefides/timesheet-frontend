@@ -185,6 +185,10 @@ export default function EmployeeDayDetailsPanel({
             </Alert>
           )}
           <Stack spacing={2}>
+            <SalesOrderField
+              value={form.salesOrderNumber}
+              onChange={(salesOrderNumber) => onFormChange({ ...form, salesOrderNumber })}
+            />
             <ProjectPicker
               projects={projects}
               value={form.projectId}
@@ -236,10 +240,6 @@ export default function EmployeeDayDetailsPanel({
               size="small"
               value={form.description}
               onChange={(e) => onFormChange({ ...form, description: e.target.value })}
-            />
-            <SalesOrderField
-              value={form.salesOrderNumber}
-              onChange={(salesOrderNumber) => onFormChange({ ...form, salesOrderNumber })}
             />
             {/* Sharing checks each colleague's assignment, which an unlisted project doesn't have. */}
             {!isOther && (
