@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import type { TeamTimesheet, TimesheetEntry } from '../../lib/types';
 import { formatHours, formatMinutes, sumMinutes } from '../../lib/duration';
 import { entryProjectLabel } from '../../lib/entryProject';
+import SalesOrderCell from '../common/SalesOrderCell';
 
 interface DayDetailsPanelProps {
   selectedDate: Dayjs | null;
@@ -101,7 +102,7 @@ export default function DayDetailsPanel({
                           </Typography>
                         )}
                       </TableCell>
-                      <TableCell>{e.salesOrderNumber || '—'}</TableCell>
+                      <TableCell><SalesOrderCell number={e.salesOrderNumber} customer={e.customerName} /></TableCell>
                       <TableCell align="right">{formatHours(e.hours)}</TableCell>
                       <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                       {canEdit && (

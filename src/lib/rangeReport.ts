@@ -16,6 +16,8 @@ export interface ReportRow {
   description: string;
   /** Empty when the entry has no sales order (and is therefore non-billable). */
   salesOrderNumber: string;
+  /** The SO's customer from Odoo; empty when unknown. */
+  customerName: string;
   isBillable: boolean;
   minutes: number;
   status: TimesheetStatus;
@@ -41,6 +43,7 @@ export interface ProjectTotal {
 export interface SalesOrderTotal {
   /** Empty string groups the entries booked without a sales order. */
   salesOrderNumber: string;
+  customerName: string;
   projectCodes: string[];
   minutes: number;
   billableMinutes: number;
@@ -103,10 +106,13 @@ function totalsBySalesOrder(rows: ReportRow[]): SalesOrderTotal[] {
   const map = new Map<string, SalesOrderTotal & { codes: Set<string> }>();
   for (const r of rows) {
     const so = map.get(r.salesOrderNumber) ?? {
-      salesOrderNumber: r.salesOrderNumber, projectCodes: [], minutes: 0, billableMinutes: 0, codes: new Set(),
+      salesOrderNumber: r.salesOrderNumber, customerName: r.customerName,
+      projectCodes: [], minutes: 0, billableMinutes: 0, codes: new Set(),
     };
     so.minutes += r.minutes;
     if (r.isBillable) so.billableMinutes += r.minutes;
+    // Entries saved before the order reached the sync have no customer.
+    if (!so.customerName && r.customerName) so.customerName = r.customerName;
     if (r.projectCode) so.codes.add(r.isOtherProject ? `Other: ${r.projectName}` : r.projectCode);
     map.set(r.salesOrderNumber, so);
   }
@@ -138,6 +144,7 @@ export function buildRangeReport(weeks: TeamTimesheet[], from: string, to: strin
         isOtherProject: entryProject(e).isOther,
         description: e.description,
         salesOrderNumber: e.salesOrderNumber ?? '',
+        customerName: e.customerName ?? '',
         isBillable: e.isBillable,
         minutes: toMinutes(e.hours),
         status: week.status,
@@ -263,7 +270,7 @@ function addEmployeeSheet(ws: Worksheet, emp: EmployeeTotal, rows: ReportRow[], 
 
   // Both tables share these columns, so each takes the wider of the two needs.
   const gridWidths = [12, 7, ...projects.map(() => 14), 12, 13, 12];
-  const entryWidths = [12, 7, 14, 28, 16, 48, 10, 10, 18, 22];
+  const entryWidths = [12, 7, 14, 28, 16, 28, 48, 10, 10, 18, 22];
   setWidths(ws, Array.from(
     { length: Math.max(gridWidths.length, entryWidths.length) },
     (_, i) => Math.max(gridWidths[i] ?? 0, entryWidths[i] ?? 0),
@@ -311,18 +318,18 @@ function addEmployeeSheet(ws: Worksheet, emp: EmployeeTotal, rows: ReportRow[], 
   ws.addRow([]);
   styleSection(ws.addRow(['Entries']));
   styleHeader(ws.addRow([
-    'Date', 'Day', 'Project code', 'Project name', 'SO number', 'Description', 'Billable', 'Hours',
+    'Date', 'Day', 'Project code', 'Project name', 'SO number', 'Customer', 'Description', 'Billable', 'Hours',
     'Week status', 'Logged by',
   ]));
   for (const r of rows) {
     const date = utc(r.workDate);
     const row = ws.addRow([
-      date, WEEKDAYS[date.getUTCDay()], r.projectCode, r.projectName, r.salesOrderNumber, r.description,
+      date, WEEKDAYS[date.getUTCDay()], r.projectCode, r.projectName, r.salesOrderNumber, r.customerName, r.description,
       r.isBillable ? 'Yes' : 'No', hrs(r.minutes), r.status.replace('_', ' ').toLowerCase(), r.loggedBy,
     ]);
     row.getCell(1).numFmt = DATE_FMT;
-    row.getCell(6).alignment = { wrapText: true, vertical: 'top' };
-    row.getCell(8).numFmt = HOURS_FMT;
+    row.getCell(7).alignment = { wrapText: true, vertical: 'top' };
+    row.getCell(9).numFmt = HOURS_FMT;
   }
 }
 
@@ -395,11 +402,12 @@ function addConsolidatedSheet(ws: Worksheet, report: RangeReport) {
   ws.addRow([]);
   ws.addRow([]);
   styleSection(ws.addRow(['Totals by sales order (SO)']));
-  styleHeader(ws.addRow(['SO number', 'Project code(s)', 'Billable', 'Non-billable', 'Total']));
+  styleHeader(ws.addRow(['SO number', 'Customer', 'Billable', 'Non-billable', 'Total', 'Project code(s)']));
   for (const so of report.bySalesOrder) {
     formatHours(ws.addRow([
-      so.salesOrderNumber || 'No SO number', so.projectCodes.join(', '),
+      so.salesOrderNumber || 'No SO number', so.customerName,
       hrs(so.billableMinutes), hrs(so.minutes - so.billableMinutes), hrs(so.minutes),
+      so.projectCodes.join(', '),
     ]), 3, 5);
   }
   const soTotal = ws.addRow([

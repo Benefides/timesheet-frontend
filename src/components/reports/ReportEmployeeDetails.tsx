@@ -7,6 +7,7 @@ import { formatMinutes } from '../../lib/duration';
 import type { ReportRow } from '../../lib/rangeReport';
 import { WEEKLY_TARGET_HOURS, mondayOf } from '../../lib/weeklyTarget';
 import TargetPercentChip from '../common/TargetPercentChip';
+import SalesOrderCell from '../common/SalesOrderCell';
 
 interface ReportEmployeeDetailsProps {
   /** One person's entries within the report range. */
@@ -133,7 +134,7 @@ export default function ReportEmployeeDetails({ rows, from, to, weekTotals }: Re
                           <Typography variant="caption" color="text.secondary">Logged by {r.loggedBy}</Typography>
                         )}
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.salesOrderNumber || '—'}</TableCell>
+                      <TableCell><SalesOrderCell number={r.salesOrderNumber} customer={r.customerName} /></TableCell>
                       <TableCell>
                         <Chip
                           size="small"

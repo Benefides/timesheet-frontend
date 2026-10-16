@@ -2,6 +2,7 @@ import { Box, Chip, Stack, Table, TableBody, TableContainer, TableCell, TableHea
 import dayjs from 'dayjs';
 import type { TimesheetEntry } from '../../lib/types';
 import { formatMinutes, sumMinutes } from '../../lib/duration';
+import SalesOrderCell from '../common/SalesOrderCell';
 
 interface ApprovalWeekDetailsProps {
   weekStart: string;
@@ -93,7 +94,7 @@ export default function ApprovalWeekDetails({ weekStart, entries }: ApprovalWeek
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{e.salesOrderNumber || '—'}</TableCell>
+                  <TableCell><SalesOrderCell number={e.salesOrderNumber} customer={e.customerName} /></TableCell>
                   <TableCell>
                     <Chip
                       size="small"

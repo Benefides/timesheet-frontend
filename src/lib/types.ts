@@ -32,6 +32,8 @@ export interface TimesheetEntry {
   isBillable: boolean;
   /** Customer sales order the time is billed against; null for non-billable work. */
   salesOrderNumber?: string | null;
+  /** The SO's customer from Odoo, as it was when the entry was saved. */
+  customerName?: string | null;
   description: string;
   project?: { code: string; name: string };
   /** Set when a colleague logged this shared entry on the owner's behalf. */
@@ -105,4 +107,13 @@ export interface AdminAssignment {
   effectiveFrom: string;
   effectiveTo: string | null;
   user: { id: string; displayName: string; employeeCode: string | null };
+}
+
+/** A sales order synced from Odoo, as the SO dropdown offers it. */
+export interface SalesOrderOption {
+  number: string;
+  customerName: string | null;
+  /** Odoo sale.order state: draft, sent, sale, done. */
+  state: string;
+  orderDate: string | null;
 }

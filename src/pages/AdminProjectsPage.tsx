@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiErrorMessage } from '../lib/api';
 import { useMe } from '../lib/hooks';
 import type { AdminAssignment, AdminProject, AdminUser } from '../lib/types';
+import OdooSyncCard from '../components/admin/OdooSyncCard';
 
 /** An assignment currently in force (its window covers today). */
 function isCurrent(a: AdminAssignment): boolean {
@@ -91,6 +92,8 @@ export default function AdminProjectsPage() {
       </Stack>
 
       {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+
+      {isAdmin && <OdooSyncCard />}
 
       <Paper variant="outlined">
         <TableContainer>

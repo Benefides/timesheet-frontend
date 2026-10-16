@@ -14,6 +14,7 @@ import { WEEKLY_TARGET_HOURS } from '../../lib/weeklyTarget';
 import TargetPercentChip from '../common/TargetPercentChip';
 import { REVERTIBLE } from './WeekRevert';
 import { entryProjectLabel } from '../../lib/entryProject';
+import SalesOrderCell from '../common/SalesOrderCell';
 
 const STATUS_COLOR: Record<TimesheetStatus, 'default' | 'info' | 'secondary' | 'success' | 'warning'> = {
   DRAFT: 'default',
@@ -154,7 +155,7 @@ export default function EmployeeWeeksTable({
                                                 </Typography>
                                               )}
                                             </TableCell>
-                                            <TableCell>{e.salesOrderNumber || '—'}</TableCell>
+                                            <TableCell><SalesOrderCell number={e.salesOrderNumber} customer={e.customerName} /></TableCell>
                                             <TableCell align="right">{formatHours(e.hours)}</TableCell>
                                             <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                                             {canEdit && (

@@ -12,6 +12,7 @@ import CoworkerPicker from './CoworkerPicker';
 import SalesOrderField from './SalesOrderField';
 import { OTHER_PROJECT_ID, entryProjectLabel } from '../../lib/entryProject';
 import { WEEKLY_TARGET_HOURS, weekProgress } from '../../lib/weeklyTarget';
+import SalesOrderCell from '../common/SalesOrderCell';
 
 /** One line under the form: where the week stands once this entry is added. */
 function WeekRemainingHint({ loggedMinutes, pendingMinutes }: { loggedMinutes: number; pendingMinutes: number }) {
@@ -147,7 +148,7 @@ export default function EmployeeDayDetailsPanel({
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell>{e.salesOrderNumber || '—'}</TableCell>
+                    <TableCell><SalesOrderCell number={e.salesOrderNumber} customer={e.customerName} /></TableCell>
                     <TableCell align="right">{formatHours(e.hours)}</TableCell>
                     <TableCell>{e.isBillable ? 'Billable' : 'Non-billable'}</TableCell>
                     <TableCell align="right">
