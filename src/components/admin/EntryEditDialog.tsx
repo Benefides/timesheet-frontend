@@ -64,7 +64,7 @@ export default function EntryEditDialog({
     if (!entry) return;
     const { hours, minutes } = splitDuration(entry.hours);
     setForm({
-      // An "Other" entry opens with Other selected and its typed name.
+      // A typed-in project opens with its name in the project field.
       projectId: entry.projectId ?? OTHER_PROJECT_ID,
       customProjectName: entry.customProjectName ?? '',
       workDate: dayjs(entry.workDate).format('YYYY-MM-DD'),
@@ -97,23 +97,14 @@ export default function EntryEditDialog({
           <ProjectPicker
             projects={projects}
             value={form.projectId}
+            customName={form.customProjectName}
             size="small"
-            onChange={(p) =>
-              setForm((f) => ({ ...f, projectId: p?.id ?? '' }))
+            onChange={(p, typedName) =>
+              setForm((f) => ({ ...f, projectId: p?.id ?? '', customProjectName: typedName }))
             }
           />
 
-          {isOther ? (
-            <TextField
-              label="Project name"
-              size="small"
-              required
-              value={form.customProjectName}
-              inputProps={{ maxLength: 160 }}
-              helperText="Not in the project list. Once the project is set up, pick it above to file this entry under it."
-              onChange={(e) => setForm((f) => ({ ...f, customProjectName: e.target.value }))}
-            />
-          ) : entry && !entry.projectId && (
+          {entry && !entry.projectId && form.projectId && form.projectId !== OTHER_PROJECT_ID && (
             <Alert severity="info">
               Was logged as “Other: {entry.customProjectName}”. Saving files it under the project picked above.
             </Alert>

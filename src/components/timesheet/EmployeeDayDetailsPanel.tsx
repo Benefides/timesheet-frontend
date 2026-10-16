@@ -180,8 +180,8 @@ export default function EmployeeDayDetailsPanel({
           </Typography>
           {projects.length === 0 && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              You have no assigned projects yet. Choose “Other (not in list)” to log time against a
-              project by name until an administrator assigns you.
+              You have no assigned projects yet. Type the project name in the Project field to log
+              time against it until an administrator assigns you.
             </Alert>
           )}
           <Stack spacing={2}>
@@ -192,29 +192,19 @@ export default function EmployeeDayDetailsPanel({
             <ProjectPicker
               projects={projects}
               value={form.projectId}
+              customName={form.customProjectName}
               size="small"
-              onChange={(p) =>
+              onChange={(p, typedName) =>
                 onFormChange({
                   ...form,
                   projectId: p?.id ?? '',
+                  customProjectName: typedName,
                   // The colleague list is per project — a stale pick would
                   // name someone who is not on the new project.
-                  coworkerIds: [],
+                  coworkerIds: p?.id === form.projectId ? form.coworkerIds : [],
                 })
               }
             />
-            {isOther && (
-              <TextField
-                label="Project name"
-                size="small"
-                required
-                autoFocus
-                value={form.customProjectName}
-                inputProps={{ maxLength: 160 }}
-                helperText="For a project that isn't in the list yet. An admin can move this entry onto the project once it's set up."
-                onChange={(e) => onFormChange({ ...form, customProjectName: e.target.value })}
-              />
-            )}
             <Stack direction="row" spacing={2}>
               <TextField
                 label="Hours"
